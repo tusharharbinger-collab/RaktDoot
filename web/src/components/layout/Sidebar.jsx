@@ -54,35 +54,35 @@ export default function Sidebar() {
         className="sidebar-logo"
         onClick={() => navigate(isAdmin ? '/admin/users' : '/manager/map')}
         style={{
-          padding: '16px 14px',
+          height: 'var(--topbar-height)',
+          padding: '0 12px',
           borderBottom: '1px solid var(--border-subtle)',
           background: 'linear-gradient(180deg, rgba(220, 38, 38, 0.12) 0%, transparent 100%)',
           cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
         }}
         title="Go to Map"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
             <img
               src={omBloodDropIcon}
               alt="Jankalyan Blood Centre"
-              style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(220, 38, 38, 0.6))' }}
+              style={{ width: 24, height: 24, objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(220, 38, 38, 0.6))' }}
             />
             <img
               src={nabhBadgeIcon}
               alt="NABH Accredited"
-              style={{ width: 28, height: 28, objectFit: 'contain', borderRadius: '50%' }}
+              style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }}
             />
           </div>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#ffffff', letterSpacing: '0.3px', lineHeight: 1.2 }}>
+          <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: '#ffffff', letterSpacing: '0.3px', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               RAKTDOOT TRACKER
             </div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 2 }}>
+            <div style={{ fontSize: 9, fontWeight: 600, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Jankalyan Blood Centre
-            </div>
-            <div style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>
-              Pune, Maharashtra
             </div>
           </div>
         </div>

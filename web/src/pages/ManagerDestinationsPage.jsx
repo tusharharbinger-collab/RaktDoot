@@ -79,13 +79,13 @@ export default function ManagerDestinationsPage() {
   return (
     <div className="page-content-full">
       {/* Topbar */}
-      <div className="topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="topbar" style={{ padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <div
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
+              width: 24,
+              height: 24,
+              borderRadius: 6,
               background: 'rgba(220, 38, 38, 0.15)',
               border: '1px solid rgba(220, 38, 38, 0.45)',
               display: 'flex',
@@ -95,19 +95,16 @@ export default function ManagerDestinationsPage() {
               flexShrink: 0,
             }}
           >
-            <MapPin size={16} />
+            <MapPin size={13} />
           </div>
-          <div>
-            <div className="topbar-title" style={{ fontSize: 15, fontWeight: 700, color: '#ffffff' }}>
-              {t.destinationManagement || 'Destination & Geofence Management'}
-            </div>
-            <div className="topbar-subtitle" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              {t.destinationSubtitle || 'Delivery hubs, geofences, and driver task dispatches'}
-            </div>
+          <div style={{ minWidth: 0 }}>
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: '#ffffff', whiteSpace: 'nowrap' }}>
+              {t.destinationManagement || 'Destination Management'}
+            </span>
           </div>
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <button
             id="btn-dest-new-request"
             className="btn btn-primary btn-sm"
@@ -115,28 +112,45 @@ export default function ManagerDestinationsPage() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 5,
+              padding: '4px 10px',
+              fontSize: 11.5,
+              fontWeight: 600,
               background: 'linear-gradient(135deg, #b91c1c, #dc2626)',
-              boxShadow: '0 2px 10px rgba(220, 38, 38, 0.4)',
+              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.35)',
+              borderRadius: 6,
+              whiteSpace: 'nowrap',
             }}
           >
-            <Send size={13} />
-            <span>New Collection Request</span>
+            <Send size={12} />
+            <span>New Request</span>
           </button>
 
           <button
             id="btn-add-destination"
             className="btn btn-secondary btn-sm"
             onClick={() => setIsAddModalOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 9px',
+              fontSize: 11.5,
+              borderRadius: 6,
+              whiteSpace: 'nowrap',
+            }}
           >
-            <Plus size={15} />
+            <Plus size={13} />
             <span>{t.addDestination || 'Add Destination'}</span>
           </button>
 
+          <div style={{ height: 16, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
+
           <LanguageToggle />
-          <div style={{ height: 24, width: 1, background: 'var(--border-default)' }} />
-          <img src={harbingerLogo} alt="Harbinger Group" style={{ height: 24, opacity: 0.9, objectFit: 'contain' }} />
+
+          <div style={{ height: 16, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
+
+          <img src={harbingerLogo} alt="Harbinger Group" style={{ height: 18, opacity: 0.9, objectFit: 'contain' }} />
         </div>
       </div>
 

@@ -129,81 +129,56 @@ function ManagerMapContent() {
   return (
     <div className="page-content-full">
       {/* Streamlined, elegant Topbar */}
-      <div className="topbar" style={{ padding: '10px 20px', minHeight: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="topbar" style={{ padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           {/* Toggle Fleet List Button */}
           <button
             onClick={() => setShowDriverList(prev => !prev)}
             className="btn btn-ghost btn-icon btn-sm"
             title={showDriverList ? "Collapse Fleet Panel" : "Show Fleet Panel"}
             style={{
+              width: 28,
+              height: 28,
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid var(--border-default)',
               color: showDriverList ? 'var(--color-primary-light)' : 'var(--text-muted)',
+              borderRadius: 6,
+              flexShrink: 0,
             }}
           >
-            {showDriverList ? <PanelLeftClose size={16} /> : <PanelLeft size={16} />}
+            {showDriverList ? <PanelLeftClose size={15} /> : <PanelLeft size={15} />}
           </button>
 
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: 'var(--color-primary-glow)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '1px solid rgba(220, 38, 38, 0.45)',
-            flexShrink: 0,
-          }}>
-            <MapIcon size={16} style={{ color: 'var(--color-primary-light)' }} />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <div className="topbar-title" style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>
               {t.liveBloodTransportTracking}
-            </div>
+            </span>
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 5,
+              gap: 4,
               background: 'rgba(16, 185, 129, 0.12)',
               border: '1px solid rgba(16, 185, 129, 0.35)',
               color: '#34d399',
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 700,
-              padding: '2px 9px',
-              borderRadius: 12,
+              padding: '1px 7px',
+              borderRadius: 10,
               letterSpacing: '0.3px',
               whiteSpace: 'nowrap',
             }}>
-              <span className="badge-dot pulse" style={{ background: '#10b981', width: 6, height: 6 }} />
+              <span className="badge-dot pulse" style={{ background: '#10b981', width: 5, height: 5 }} />
               {t.liveDispatchBadge}
             </span>
           </div>
         </div>
 
-        {/* Right side: Geofence Toggle, Action Buttons, Language Toggle & Corporate Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap' }}>
-          {/* Toggle Geofence Control Button */}
-          <button
-            id="btn-toggle-geofence"
-            onClick={() => setShowGeofencePanel(prev => !prev)}
-            className={`btn btn-sm ${showGeofencePanel ? 'btn-primary' : 'btn-secondary'}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 12,
-              padding: '5px 12px',
-              borderRadius: 8,
-              border: showGeofencePanel ? '1px solid #38bdf8' : '1px solid var(--border-default)',
-              background: showGeofencePanel ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-              color: showGeofencePanel ? '#38bdf8' : 'var(--text-main)',
-              whiteSpace: 'nowrap',
-            }}
-            title="Toggle Geofence Radius & Proximity Panel"
-          >
-            <Shield size={13} style={{ color: showGeofencePanel ? '#38bdf8' : '#94a3b8' }} />
-            <span>Geofence: <strong>{radiusKm} km</strong></span>
-          </button>
-
+        {/* Right side: Action Buttons, Language Toggle & Corporate Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {/* New Collection Request Button */}
           <button
             id="btn-map-new-request"
@@ -212,16 +187,18 @@ function ManagerMapContent() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              padding: '5px 13px',
-              fontSize: 12,
+              gap: 5,
+              padding: '4px 10px',
+              fontSize: 11.5,
+              fontWeight: 600,
               background: 'linear-gradient(135deg, #b91c1c, #dc2626)',
-              boxShadow: '0 2px 10px rgba(220, 38, 38, 0.4)',
+              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.35)',
+              borderRadius: 6,
               whiteSpace: 'nowrap',
             }}
             title="Create and dispatch a blood sample collection request"
           >
-            <Send size={13} />
+            <Send size={12} />
             <span>New Request</span>
           </button>
 
@@ -230,23 +207,31 @@ function ManagerMapContent() {
             id="btn-map-add-dest"
             onClick={() => setIsAddDestinationOpen(true)}
             className="btn btn-secondary btn-sm"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', fontSize: 12, whiteSpace: 'nowrap' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 9px',
+              fontSize: 11.5,
+              borderRadius: 6,
+              whiteSpace: 'nowrap'
+            }}
             title="Create a new delivery destination"
           >
-            <Plus size={14} />
+            <Plus size={13} />
             <span>{t.addDestination || 'Add Destination'}</span>
           </button>
 
-          <div style={{ height: 20, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
+          <div style={{ height: 16, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
 
           <LanguageToggle />
 
-          <div style={{ height: 20, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
+          <div style={{ height: 16, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
 
           <img
             src={harbingerLogo}
             alt="Harbinger Group"
-            style={{ height: 22, objectFit: 'contain', opacity: 0.9 }}
+            style={{ height: 18, objectFit: 'contain', opacity: 0.9 }}
             title="Harbinger Group"
           />
         </div>
