@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Shield, ChevronDown, ChevronUp, MapPin, Radio, Compass, Users } from 'lucide-react';
+import { Shield, ChevronDown, ChevronUp, MapPin, Radio, Compass, Users, X } from 'lucide-react';
 
 /**
  * Exact Haversine geographical distance in KM.
@@ -28,6 +28,7 @@ export default function GeofenceControlPanel({
   drivers = [],
   selectedDriverId,
   onSelectDriver,
+  onClose,
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [filterMode, setFilterMode] = useState('all'); // all, inside, outside
@@ -68,17 +69,17 @@ export default function GeofenceControlPanel({
     <div
       style={{
         position: 'absolute',
-        top: 14,
+        top: 60,
         left: 14,
         zIndex: 1000,
-        width: 330,
+        width: 320,
         maxWidth: 'calc(100vw - 28px)',
-        background: 'rgba(15, 23, 42, 0.92)',
+        background: 'rgba(15, 23, 42, 0.94)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
+        border: '1px solid rgba(56, 189, 248, 0.3)',
         borderRadius: 14,
-        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.65)',
+        boxShadow: '0 16px 36px rgba(0, 0, 0, 0.7)',
         overflow: 'hidden',
         color: '#f8fafc',
         fontFamily: 'Inter, sans-serif',
@@ -91,30 +92,31 @@ export default function GeofenceControlPanel({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'rgba(239, 68, 68, 0.1)',
+          background: 'rgba(56, 189, 248, 0.1)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          cursor: 'pointer',
         }}
-        onClick={() => setIsCollapsed(prev => !prev)}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }}
+          onClick={() => setIsCollapsed(prev => !prev)}
+        >
           <div
             style={{
               width: 26,
               height: 26,
               borderRadius: 6,
-              background: 'rgba(239, 68, 68, 0.25)',
+              background: 'rgba(56, 189, 248, 0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#f87171',
+              color: '#38bdf8',
             }}
           >
             <Shield size={15} />
           </div>
           <div>
             <div style={{ fontSize: 12.5, fontWeight: 700, color: '#f8fafc', lineHeight: 1.2 }}>
-              Manager Geofence Control
+              Geofence Radius & Proximity
             </div>
             <div style={{ fontSize: 10.5, color: '#94a3b8' }}>
               Radius: <strong style={{ color: '#38bdf8' }}>{radiusKm} KM</strong> · {insideDrivers.length} Inside
@@ -122,18 +124,43 @@ export default function GeofenceControlPanel({
           </div>
         </div>
 
-        <button
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#94a3b8',
-            cursor: 'pointer',
-            padding: 4,
-          }}
-          aria-label="Toggle Geofence Control"
-        >
-          {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button
+            onClick={() => setIsCollapsed(prev => !prev)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              padding: 4,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            title={isCollapsed ? "Expand panel" : "Minimize panel"}
+            aria-label="Toggle Geofence Control"
+          >
+            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                color: '#cbd5e1',
+                cursor: 'pointer',
+                padding: '3px 5px',
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              title="Close Geofence Panel"
+              aria-label="Close Geofence Panel"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Expandable Body */}

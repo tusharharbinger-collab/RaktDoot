@@ -901,11 +901,11 @@ tbody td:first-child { color: var(--text-primary); font-weight: 500; }
 ═══════════════════════════════════════════════════════════════ */
 .map-person-search-container {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: 14px;
+  left: 14px;
   z-index: 1000;
-  width: 320px;
-  max-width: calc(100% - 32px);
+  width: 270px;
+  max-width: calc(100% - 28px);
   display: flex;
   flex-direction: column;
   gap: 8px;

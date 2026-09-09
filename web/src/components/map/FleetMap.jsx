@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSocket } from '../../context/SocketContext';
@@ -38,32 +38,21 @@ function createDestinationIcon(destination) {
   
   if (isHome) {
     const html = `
-      <div style="position:relative;width:44px;height:44px;">
+      <div style="position:relative;width:38px;height:38px;">
         <div style="
-          position:absolute;top:-28px;left:50%;transform:translateX(-50%);
-          background:linear-gradient(135deg, #1e293b, #0f172a);
-          border:1.5px solid #f59e0b;
-          color:#fef08a;font-weight:800;font-size:10.5px;padding:2px 9px;
-          border-radius:12px;white-space:nowrap;
-          box-shadow:0 4px 14px rgba(245, 158, 11, 0.35);
-          pointer-events:none;letter-spacing:0.3px;
-        ">
-          🏥 BLOOD DONATION BUILDING (HOME BASE)
-        </div>
-        <div style="
-          position:absolute;inset:-10px;border-radius:50%;border:2px solid #f59e0b;
+          position:absolute;inset:-6px;border-radius:50%;border:2px solid #f59e0b;
           opacity:0;animation:radar 3s ease-out infinite;pointer-events:none;
         "></div>
         <div style="
-          width:44px;height:44px;border-radius:50% 50% 50% 0;
+          width:38px;height:38px;border-radius:50% 50% 50% 0;
           background:linear-gradient(135deg, #f59e0b, #b91c1c);
           transform:rotate(-45deg);
-          border:3px solid #ffffff;
-          box-shadow:0 6px 20px rgba(245, 158, 11, 0.5);
+          border:2.5px solid #ffffff;
+          box-shadow:0 4px 14px rgba(245, 158, 11, 0.45);
           display:flex;align-items:center;justify-content:center;
           cursor:pointer;
         ">
-          <div style="transform:rotate(45deg);font-size:20px;color:white;display:flex;align-items:center;justify-content:center;">
+          <div style="transform:rotate(45deg);font-size:17px;color:white;display:flex;align-items:center;justify-content:center;">
             🏥
           </div>
         </div>
@@ -71,35 +60,25 @@ function createDestinationIcon(destination) {
     `;
     return L.divIcon({
       html,
-      iconSize: [44, 44],
-      iconAnchor: [22, 44],
-      popupAnchor: [0, -44],
+      iconSize: [38, 38],
+      iconAnchor: [19, 38],
+      popupAnchor: [0, -38],
       className: '',
     });
   }
 
   const html = `
-    <div style="position:relative;width:38px;height:38px;">
+    <div style="position:relative;width:32px;height:32px;">
       <div style="
-        position:absolute;top:-26px;left:50%;transform:translateX(-50%);
-        background:#0f172a;border:1px solid ${color};
-        color:white;font-weight:700;font-size:10.5px;padding:2px 8px;
-        border-radius:10px;white-space:nowrap;
-        box-shadow:0 3px 12px rgba(0,0,0,0.5);
-        pointer-events:none;
-      ">
-        📍 ${destination.name}
-      </div>
-      <div style="
-        width:38px;height:38px;border-radius:50% 50% 50% 0;
+        width:32px;height:32px;border-radius:50% 50% 50% 0;
         background:linear-gradient(135deg, ${color}, #7f1d1d);
         transform:rotate(-45deg);
-        border:3px solid white;
-        box-shadow:0 4px 14px rgba(0,0,0,0.4);
+        border:2px solid white;
+        box-shadow:0 3px 10px rgba(0,0,0,0.35);
         display:flex;align-items:center;justify-content:center;
         cursor:pointer;
       ">
-        <div style="transform:rotate(45deg);font-size:15px;color:white;display:flex;align-items:center;justify-content:center;">
+        <div style="transform:rotate(45deg);font-size:13px;color:white;display:flex;align-items:center;justify-content:center;">
           ${hasDriver ? '🎯' : '📍'}
         </div>
       </div>
@@ -107,38 +86,29 @@ function createDestinationIcon(destination) {
   `;
   return L.divIcon({
     html,
-    iconSize: [38, 38],
-    iconAnchor: [19, 38],
-    popupAnchor: [0, -38],
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
     className: '',
   });
 }
 
 function createCenterHQIcon(center, radiusKm) {
   const html = `
-    <div style="position:relative;width:46px;height:46px;">
+    <div style="position:relative;width:38px;height:38px;">
       <div style="
-        position:absolute;inset:-8px;border-radius:50%;
+        position:absolute;inset:-6px;border-radius:50%;
         border:2px dashed #38bdf8;
-        animation:target-ping 2s cubic-bezier(0,0,0.2,1) infinite;
+        animation:target-ping 2.5s cubic-bezier(0,0,0.2,1) infinite;
         pointer-events:none;
       "></div>
       <div style="
-        position:absolute;top:-26px;left:50%;transform:translateX(-50%);
-        background:linear-gradient(135deg, #0284c7, #0369a1);
-        color:white;font-weight:800;font-size:10px;padding:2px 8px;
-        border-radius:12px;white-space:nowrap;
-        box-shadow:0 4px 14px rgba(0,0,0,0.5);
-        border:1px solid rgba(255,255,255,0.4);
-        pointer-events:none;
-      ">📍 GEOFENCE HQ (${radiusKm} KM)</div>
-      <div style="
-        width:46px;height:46px;border-radius:50%;
+        width:38px;height:38px;border-radius:50%;
         background:linear-gradient(135deg, #0284c7, #0f172a);
         display:flex;align-items:center;justify-content:center;
-        border:3px solid #38bdf8;
-        box-shadow:0 4px 18px rgba(56,189,248,0.5);
-        font-size:20px;
+        border:2.5px solid #38bdf8;
+        box-shadow:0 4px 16px rgba(56,189,248,0.45);
+        font-size:17px;
         cursor:pointer;
       ">
         🏥
@@ -147,9 +117,9 @@ function createCenterHQIcon(center, radiusKm) {
   `;
   return L.divIcon({
     html,
-    iconSize: [46, 46],
-    iconAnchor: [23, 23],
-    popupAnchor: [0, -28],
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+    popupAnchor: [0, -22],
     className: '',
   });
 }
@@ -216,33 +186,21 @@ function createVehicleIcon(driver, isSelected, distanceInfo = null) {
   const speedBadgeBorder = isMoving ? '1px solid #34d399' : '1px solid #333';
   const speedText = isMoving ? `⚡ ${Math.round(driver.speed)} km/h` : `${Math.round(driver.speed || 0)} km/h`;
 
-  const distBadge = distanceInfo != null
-    ? `<div style="
-        position:absolute;bottom:-36px;left:50%;transform:translateX(-50%);
-        background:${distanceInfo.isInside ? 'rgba(16, 185, 129, 0.95)' : 'rgba(30, 41, 59, 0.92)'};
-        color:${distanceInfo.isInside ? '#ffffff' : '#94a3b8'};
-        border:1px solid ${distanceInfo.isInside ? '#10b981' : '#475569'};
-        border-radius:10px;padding:1px 6px;font-size:9.5px;font-weight:700;
-        white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);
-        pointer-events:none;
-      ">${distanceInfo.km}k ${distanceInfo.isInside ? '· IN' : '· OUT'}</div>`
-    : '';
-
   const html = `
-    <div style="position:relative;width:44px;height:44px;">
+    <div style="position:relative;width:40px;height:40px;">
       ${nameBadge}
       ${targetRing}
       ${movingWave}
       ${heading}
       <div style="
-        width:44px;height:44px;border-radius:50%;
+        width:40px;height:40px;border-radius:50%;
         background:${isMoving ? 'linear-gradient(135deg, #059669, #10b981)' : color};
         display:flex;align-items:center;justify-content:center;
-        border:3px solid white;
+        border:2.5px solid white;
         ${glow}
         ${pulse}
         ${movingGlow}
-        font-size:20px;font-weight:700;color:white;
+        font-size:18px;font-weight:700;color:white;
         cursor:pointer;
         position:relative;z-index:1;
         transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -250,24 +208,23 @@ function createVehicleIcon(driver, isSelected, distanceInfo = null) {
         🚚
       </div>
       <div style="
-        position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
+        position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
         background:${speedBadgeBg};
         border:${speedBadgeBorder};
-        border-radius:6px;
-        padding:2px 6px;font-size:10.5px;font-weight:800;color:white;
+        border-radius:5px;
+        padding:1px 5px;font-size:9.5px;font-weight:700;color:white;
         white-space:nowrap;font-family:monospace;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
         letter-spacing: 0.2px;
       ">${speedText}</div>
-      ${distBadge}
     </div>
   `;
 
   return L.divIcon({
     html,
-    iconSize: [44, 76],
-    iconAnchor: [22, 22],
-    popupAnchor: [0, -26],
+    iconSize: [40, 52],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -22],
     className: 'smooth-moving-marker',
   });
 }
@@ -369,6 +326,8 @@ export default function FleetMap({
   geofenceCenter = { lat: 18.5039, lng: 73.8524, name: 'Jankalyan Blood Centre (Swargate HQ)' },
   radiusKm = 5,
   onCreateCollectionRequest,
+  onToggleGeofence,
+  isGeofenceOpen = false,
 }) {
   const { fleetDriversList, destinations: socketDestinations } = useSocket();
   const destinations = propDestinations || socketDestinations || [];
@@ -506,65 +465,6 @@ export default function FleetMap({
         onResetView={handleResetView}
       />
 
-      {/* Live Active Moving Driver Floating Alert Chip */}
-      {(() => {
-        const sortedDrivers = [...validDrivers].sort((a, b) => {
-          const speedDiff = (b.speed || 0) - (a.speed || 0);
-          if (speedDiff !== 0) return speedDiff;
-          const timeA = new Date(a.updated_at || a.lastMovedTime || 0).getTime();
-          const timeB = new Date(b.updated_at || b.lastMovedTime || 0).getTime();
-          return timeB - timeA;
-        });
-        const activeTarget = sortedDrivers[0];
-        if (!activeTarget) return null;
-
-        const isMoving = (activeTarget.speed || 0) > 0;
-
-        return (
-          <div style={{
-            position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)',
-            zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8,
-            background: 'rgba(15, 23, 42, 0.94)', backdropFilter: 'blur(12px)',
-            border: isMoving ? '1.5px solid #10b981' : '1px solid rgba(16, 185, 129, 0.4)',
-            borderRadius: 24, padding: '6px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-          }}>
-            <span style={{
-              width: 9, height: 9, borderRadius: '50%',
-              background: isMoving ? '#10b981' : '#f59e0b',
-              display: 'inline-block',
-              boxShadow: isMoving ? '0 0 10px #10b981' : 'none',
-            }} />
-            <span style={{ fontSize: 12, color: '#f8fafc', fontWeight: 600 }}>
-              {isMoving ? (
-                <span style={{ color: '#34d399', fontWeight: 700 }}>🟢 MOVING: </span>
-              ) : (
-                <span style={{ color: '#94a3b8' }}>Driver: </span>
-              )}
-              <span style={{ color: '#ffffff', fontWeight: 700 }}>{activeTarget.name}</span>
-              {activeTarget.speed > 0 ? ` · ⚡ ${Math.round(activeTarget.speed)} km/h` : ''}
-              {` · 📍 ${(() => {
-                const addr = getDisplayAddress(activeTarget);
-                return addr.length > 28 ? addr.slice(0, 28) + '...' : addr;
-              })()}`}
-            </span>
-            <button
-              onClick={() => {
-                onSelectDriver?.(activeTarget.id);
-                focusOnDriver(activeTarget.id, 16);
-              }}
-              style={{
-                background: '#b91c1c', border: 'none', borderRadius: 12,
-                color: 'white', fontSize: 11, fontWeight: 700, padding: '4px 11px',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-                boxShadow: '0 2px 8px rgba(185,28,28,0.5)',
-              }}
-            >
-              🎯 Focus
-            </button>
-          </div>
-        );
-      })()}
-
       {/* Selected Vehicle Floating Focus Pill */}
       {selectedDriver && (
         <div style={{
@@ -599,6 +499,27 @@ export default function FleetMap({
         position: 'absolute', top: 14, right: 14, zIndex: 1000,
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
+        {onToggleGeofence && (
+          <button
+            onClick={onToggleGeofence}
+            title="Toggle Geofence Radius & Proximity Panel"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: isGeofenceOpen ? 'rgba(56, 189, 248, 0.25)' : 'rgba(15, 23, 42, 0.88)',
+              backdropFilter: 'blur(12px)',
+              border: isGeofenceOpen ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: 8,
+              color: isGeofenceOpen ? '#38bdf8' : '#cbd5e1',
+              fontSize: 11.5, fontWeight: 600, padding: '6px 11px',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35)', cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Shield size={13} style={{ color: isGeofenceOpen ? '#38bdf8' : '#94a3b8' }} />
+            <span>Geofence ({radiusKm}k)</span>
+          </button>
+        )}
+
         {activeDrivers.length > 0 && (
           <button
             onClick={handleFocusActive}
@@ -690,6 +611,11 @@ export default function FleetMap({
               position={[geofenceCenter.lat, geofenceCenter.lng]}
               icon={createCenterHQIcon(geofenceCenter, radiusKm)}
             >
+              <Tooltip direction="top" offset={[0, -20]} opacity={0.95}>
+                <span style={{ fontSize: 11, fontWeight: 700 }}>
+                  🏥 {geofenceCenter.name || 'Jankalyan HQ'} (Center · {radiusKm} KM)
+                </span>
+              </Tooltip>
               <Popup>
                 <div style={{ minWidth: 220, fontFamily: 'Inter, sans-serif' }}>
                   <div style={{ fontWeight: 800, color: '#f8fafc', fontSize: 13, marginBottom: 4 }}>
@@ -789,6 +715,11 @@ export default function FleetMap({
                 position={[parseFloat(dest.lat), parseFloat(dest.lng)]}
                 icon={createDestinationIcon(dest)}
               >
+                <Tooltip direction="top" offset={[0, -28]} opacity={0.95}>
+                  <span style={{ fontSize: 11, fontWeight: 700 }}>
+                    {isHome ? '🏥 ' : '📍 '} {dest.name}
+                  </span>
+                </Tooltip>
                 <Popup>
                   <div style={{ minWidth: 240, fontFamily: 'Inter, sans-serif' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -938,6 +869,11 @@ export default function FleetMap({
                 },
               }}
             >
+              <Tooltip direction="top" offset={[0, -22]} opacity={0.95}>
+                <span style={{ fontSize: 11, fontWeight: 700 }}>
+                  🚚 {driver.name} {driver.speed > 0 ? `· ${Math.round(driver.speed)} km/h` : ''}
+                </span>
+              </Tooltip>
               <Popup>
                 <div style={{ minWidth: 240, fontFamily: 'Inter, sans-serif' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>

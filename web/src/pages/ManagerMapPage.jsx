@@ -30,6 +30,7 @@ function ManagerMapContent() {
 
   const [selectedDriverId, setSelectedDriverId] = useState(null);
   const [showDriverList, setShowDriverList] = useState(true);
+  const [showGeofencePanel, setShowGeofencePanel] = useState(false);
 
   // Geofence states: 1 to 30 KM radius, centered on Jankalyan Swargate HQ by default
   const [geofenceCenter, setGeofenceCenter] = useState(DEFAULT_HOME_CENTER);
@@ -154,8 +155,8 @@ function ManagerMapContent() {
             <MapIcon size={16} style={{ color: 'var(--color-primary-light)' }} />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div className="topbar-title" style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <div className="topbar-title" style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>
               {t.liveBloodTransportTracking}
             </div>
             <span style={{
@@ -170,6 +171,7 @@ function ManagerMapContent() {
               padding: '2px 9px',
               borderRadius: 12,
               letterSpacing: '0.3px',
+              whiteSpace: 'nowrap',
             }}>
               <span className="badge-dot pulse" style={{ background: '#10b981', width: 6, height: 6 }} />
               {t.liveDispatchBadge}
@@ -177,8 +179,31 @@ function ManagerMapContent() {
           </div>
         </div>
 
-        {/* Right side: Action Buttons, Driver App Link, Download ZIP, Language Toggle & Corporate Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        {/* Right side: Geofence Toggle, Action Buttons, Language Toggle & Corporate Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap' }}>
+          {/* Toggle Geofence Control Button */}
+          <button
+            id="btn-toggle-geofence"
+            onClick={() => setShowGeofencePanel(prev => !prev)}
+            className={`btn btn-sm ${showGeofencePanel ? 'btn-primary' : 'btn-secondary'}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              padding: '5px 12px',
+              borderRadius: 8,
+              border: showGeofencePanel ? '1px solid #38bdf8' : '1px solid var(--border-default)',
+              background: showGeofencePanel ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+              color: showGeofencePanel ? '#38bdf8' : 'var(--text-main)',
+              whiteSpace: 'nowrap',
+            }}
+            title="Toggle Geofence Radius & Proximity Panel"
+          >
+            <Shield size={13} style={{ color: showGeofencePanel ? '#38bdf8' : '#94a3b8' }} />
+            <span>Geofence: <strong>{radiusKm} km</strong></span>
+          </button>
+
           {/* New Collection Request Button */}
           <button
             id="btn-map-new-request"
@@ -192,11 +217,12 @@ function ManagerMapContent() {
               fontSize: 12,
               background: 'linear-gradient(135deg, #b91c1c, #dc2626)',
               boxShadow: '0 2px 10px rgba(220, 38, 38, 0.4)',
+              whiteSpace: 'nowrap',
             }}
             title="Create and dispatch a blood sample collection request"
           >
             <Send size={13} />
-            <span>New Collection Request</span>
+            <span>New Request</span>
           </button>
 
           {/* Add Destination Button */}
@@ -204,69 +230,23 @@ function ManagerMapContent() {
             id="btn-map-add-dest"
             onClick={() => setIsAddDestinationOpen(true)}
             className="btn btn-secondary btn-sm"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', fontSize: 12 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', fontSize: 12, whiteSpace: 'nowrap' }}
             title="Create a new delivery destination"
           >
             <Plus size={14} />
             <span>{t.addDestination || 'Add Destination'}</span>
           </button>
 
-          <a
-            href="https://raktdoot-backend.onrender.com/driver"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-sm"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#34d399',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontSize: '12px',
-              fontWeight: 600,
-            }}
-            title="Open Driver Mobile App on Phone"
-          >
-            <Smartphone size={14} />
-            <span>Driver App (Phone)</span>
-          </a>
-
-          <a
-            href="https://raktdoot-backend.onrender.com/download/driver-app"
-            className="btn btn-sm"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'rgba(59, 130, 246, 0.12)',
-              border: '1px solid rgba(59, 130, 246, 0.35)',
-              color: '#93c5fd',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontSize: '12px',
-              fontWeight: 500,
-            }}
-            title="Download Driver App Source ZIP"
-          >
-            <Download size={14} />
-            <span>Download ZIP</span>
-          </a>
-
-          <div style={{ height: 20, width: 1, background: 'var(--border-default)' }} />
+          <div style={{ height: 20, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
 
           <LanguageToggle />
 
-          <div style={{ height: 20, width: 1, background: 'var(--border-default)' }} />
+          <div style={{ height: 20, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
 
           <img
             src={harbingerLogo}
             alt="Harbinger Group"
-            style={{ height: 24, objectFit: 'contain', opacity: 0.9 }}
+            style={{ height: 22, objectFit: 'contain', opacity: 0.9 }}
             title="Harbinger Group"
           />
         </div>
@@ -284,16 +264,19 @@ function ManagerMapContent() {
 
         <div className="map-panel-map" style={{ flex: 1, minWidth: 0, width: '100%', height: '100%', position: 'relative' }}>
           {/* Interactive Geofence Radius Control Panel */}
-          <GeofenceControlPanel
-            geofenceCenter={geofenceCenter}
-            onChangeCenter={setGeofenceCenter}
-            radiusKm={radiusKm}
-            onChangeRadius={setRadiusKm}
-            destinations={destinations}
-            drivers={fleetDriversList}
-            selectedDriverId={selectedDriverId}
-            onSelectDriver={setSelectedDriverId}
-          />
+          {showGeofencePanel && (
+            <GeofenceControlPanel
+              geofenceCenter={geofenceCenter}
+              onChangeCenter={setGeofenceCenter}
+              radiusKm={radiusKm}
+              onChangeRadius={setRadiusKm}
+              destinations={destinations}
+              drivers={fleetDriversList}
+              selectedDriverId={selectedDriverId}
+              onSelectDriver={setSelectedDriverId}
+              onClose={() => setShowGeofencePanel(false)}
+            />
+          )}
 
           <FleetMap
             selectedDriverId={selectedDriverId}
@@ -302,6 +285,8 @@ function ManagerMapContent() {
             destinations={destinations}
             geofenceCenter={geofenceCenter}
             radiusKm={radiusKm}
+            onToggleGeofence={() => setShowGeofencePanel(prev => !prev)}
+            isGeofenceOpen={showGeofencePanel}
             onAssignDriver={(dest) => setAssigningDestination(dest)}
             onEditDestination={(dest) => setEditingDestination(dest)}
             onCreateCollectionRequest={(driverId) => handleOpenCollectionRequest(driverId)}
