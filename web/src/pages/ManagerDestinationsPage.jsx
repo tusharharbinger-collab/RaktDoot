@@ -8,7 +8,6 @@ import {
 import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/LanguageContext';
 import DestinationModal from '../components/manager/DestinationModal';
-import AssignDriverModal from '../components/manager/AssignDriverModal';
 import CreateCollectionRequestModal from '../components/manager/CreateCollectionRequestModal';
 import LanguageToggle from '../components/common/LanguageToggle';
 import harbingerLogo from '../assets/harbinger_logo_actual.png';
@@ -25,7 +24,6 @@ export default function ManagerDestinationsPage() {
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingDestination, setEditingDestination] = useState(null);
-  const [assigningDestination, setAssigningDestination] = useState(null);
   const [requestingDestination, setRequestingDestination] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -261,22 +259,22 @@ export default function ManagerDestinationsPage() {
               overflowX: 'auto',
             }}
           >
-            <table style={{ width: '100%', minWidth: 840, borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid var(--border-default)' }}>
-                  <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, minWidth: 260, whiteSpace: 'nowrap' }}>
+                  <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, width: '38%', minWidth: 200, whiteSpace: 'nowrap' }}>
                     DESTINATION & ADDRESS
                   </th>
-                  <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, minWidth: 140, whiteSpace: 'nowrap' }}>
+                  <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, width: '14%', minWidth: 105, whiteSpace: 'nowrap' }}>
                     GEOFENCE RADIUS
                   </th>
-                  <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, minWidth: 170, whiteSpace: 'nowrap' }}>
+                  <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, width: '22%', minWidth: 150, whiteSpace: 'nowrap' }}>
                     ASSIGNED DRIVER
                   </th>
-                  <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, minWidth: 140, whiteSpace: 'nowrap' }}>
+                  <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, width: '13%', minWidth: 105, whiteSpace: 'nowrap' }}>
                     DISPATCH STATUS
                   </th>
-                  <th style={{ padding: '12px 20px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, textAlign: 'right', minWidth: 160, whiteSpace: 'nowrap' }}>
+                  <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11.5, textAlign: 'right', width: '13%', minWidth: 115, whiteSpace: 'nowrap' }}>
                     ACTIONS
                   </th>
                 </tr>
@@ -293,15 +291,15 @@ export default function ManagerDestinationsPage() {
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     {/* Destination name & coords */}
-                    <td style={{ padding: '14px 16px' }}>
+                    <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                         <div
                           style={{
                             width: 32,
                             height: 32,
                             borderRadius: 8,
-                            background: 'rgba(239, 68, 68, 0.12)',
-                            color: '#ef4444',
+                            background: d.is_home ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.12)',
+                            color: d.is_home ? '#f59e0b' : '#ef4444',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -311,8 +309,24 @@ export default function ManagerDestinationsPage() {
                         >
                           <MapPin size={16} />
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: 13.5 }}>{d.name}</div>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: 13.5 }}>{d.name}</span>
+                            {d.is_home && (
+                              <span style={{
+                                fontSize: 10,
+                                fontWeight: 700,
+                                background: 'rgba(245, 158, 11, 0.2)',
+                                color: '#fbbf24',
+                                border: '1px solid rgba(245, 158, 11, 0.35)',
+                                borderRadius: 4,
+                                padding: '1px 5px',
+                                textTransform: 'uppercase',
+                              }}>
+                                Base Hub
+                              </span>
+                            )}
+                          </div>
                           <div
                             title={d.address || 'No physical address specified'}
                             style={{
@@ -335,7 +349,7 @@ export default function ManagerDestinationsPage() {
                     </td>
 
                     {/* Radius */}
-                    <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                       <span
                         style={{
                           display: 'inline-flex',
@@ -350,13 +364,13 @@ export default function ManagerDestinationsPage() {
                           borderRadius: 8,
                         }}
                       >
-                        <Shield size={12} />
+                        <Shield size={11} />
                         {d.radius_m >= 1000 ? `${(d.radius_m / 1000).toFixed(1)} km` : `${d.radius_m} m`}
                       </span>
                     </td>
 
                     {/* Assigned driver */}
-                    <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                       {d.assigned_driver_id ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div
@@ -395,7 +409,7 @@ export default function ManagerDestinationsPage() {
                     </td>
 
                     {/* Status */}
-                    <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                       {d.assigned_driver_id ? (
                         getStatusBadge(d.assignment_status)
                       ) : (
@@ -404,21 +418,23 @@ export default function ManagerDestinationsPage() {
                     </td>
 
                     {/* Actions */}
-                    <td style={{ padding: '14px 20px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
                         {!d.is_home && (
                           <button
                             onClick={() => setRequestingDestination(d)}
                             className="btn btn-primary btn-sm"
                             style={{
-                              padding: '4px 9px',
-                              fontSize: 11,
+                              padding: '4px 10px',
+                              fontSize: 11.5,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: 4,
+                              gap: 5,
                               background: 'linear-gradient(135deg, #b91c1c, #dc2626)',
+                              borderRadius: 6,
+                              fontWeight: 600,
                             }}
-                            title="Dispatch a blood collection request to this hospital"
+                            title="Dispatch a blood collection request to this destination"
                           >
                             <Send size={12} />
                             <span>Request</span>
@@ -426,19 +442,10 @@ export default function ManagerDestinationsPage() {
                         )}
 
                         <button
-                          onClick={() => setAssigningDestination(d)}
-                          className="btn btn-secondary btn-sm"
-                          style={{ padding: '4px 10px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 5 }}
-                          title="Assign or reassign driver"
-                        >
-                          <UserCheck size={13} style={{ color: '#10b981' }} />
-                          <span>Assign</span>
-                        </button>
-
-                        <button
                           onClick={() => setEditingDestination(d)}
                           className="btn btn-ghost btn-icon btn-sm"
                           title="Edit Destination"
+                          style={{ padding: '4px', borderRadius: 6 }}
                         >
                           <Edit3 size={14} />
                         </button>
@@ -447,7 +454,7 @@ export default function ManagerDestinationsPage() {
                           onClick={() => handleDelete(d.id, d.name)}
                           disabled={deletingId === d.id}
                           className="btn btn-ghost btn-icon btn-sm"
-                          style={{ color: '#ef4444' }}
+                          style={{ color: '#ef4444', padding: '4px', borderRadius: 6 }}
                           title="Delete Destination"
                         >
                           <Trash2 size={14} />
@@ -477,12 +484,6 @@ export default function ManagerDestinationsPage() {
           isOpen={Boolean(editingDestination)}
           destination={editingDestination}
           onClose={() => setEditingDestination(null)}
-        />
-
-        <AssignDriverModal
-          isOpen={Boolean(assigningDestination)}
-          destination={assigningDestination}
-          onClose={() => setAssigningDestination(null)}
         />
       </div>
     </div>
