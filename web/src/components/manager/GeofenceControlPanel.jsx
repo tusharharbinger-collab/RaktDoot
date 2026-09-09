@@ -69,7 +69,7 @@ export default function GeofenceControlPanel({
     <div
       style={{
         position: 'absolute',
-        top: 60,
+        top: 14,
         left: 14,
         zIndex: 1000,
         width: 320,

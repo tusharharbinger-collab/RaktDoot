@@ -3,10 +3,9 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, Tooltip, useM
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSocket } from '../../context/SocketContext';
-import MapPersonSearch from './MapPersonSearch';
 import { getDisplayAddress } from '../../utils/geoAddress';
 import { useLanguage } from '../../context/LanguageContext';
-import { Maximize2, Crosshair, X, MapPin, UserCheck, Shield } from 'lucide-react';
+import { Maximize2, X, Shield } from 'lucide-react';
 
 // Fix default leaflet icon paths
 delete L.Icon.Default.prototype._getIconUrl;
@@ -336,7 +335,6 @@ export default function FleetMap({
   const markerRefs = useRef({});
 
   const validDrivers = fleetDriversList.filter(d => d.lat && d.lng && (d.lat !== 0 || d.lng !== 0));
-  const activeDrivers = validDrivers.filter(d => d.status === 'active' || d.status === 'issue');
   const selectedDriver = fleetDriversList.find(d => d.id === selectedDriverId);
 
   const lastFocusedIdRef = useRef(null);
@@ -395,23 +393,6 @@ export default function FleetMap({
     }
   }, [mapInstance, onSelectDriver, validDrivers]);
 
-  // Handler for selecting a driver from the on-map search bar
-  const handleSelectPerson = useCallback((driverId) => {
-    onSelectDriver?.(driverId);
-    if (driverId) {
-      focusOnDriver(driverId, 16);
-    }
-  }, [onSelectDriver, focusOnDriver]);
-
-  // Quick action: center on active driver
-  const handleFocusActive = useCallback(() => {
-    if (activeDrivers.length > 0) {
-      const target = activeDrivers[0];
-      onSelectDriver?.(target.id);
-      focusOnDriver(target.id, 16);
-    }
-  }, [activeDrivers, onSelectDriver, focusOnDriver]);
-
   return (
     <div style={{ height: '100%', width: '100%', position: 'relative', overflow: 'hidden' }}>
       <style>{`
@@ -457,23 +438,19 @@ export default function FleetMap({
         .leaflet-popup-close-button { color: #94a3b8 !important; }
       `}</style>
 
-      {/* Floating On-Map Search Bar */}
-      <MapPersonSearch
-        drivers={fleetDriversList}
-        selectedDriverId={selectedDriverId}
-        onSelectPerson={handleSelectPerson}
-        onResetView={handleResetView}
-      />
-
       {/* Selected Vehicle Floating Focus Pill */}
       {selectedDriver && (
         <div style={{
-          position: 'absolute', top: 58, left: 14, zIndex: 1000,
+          position: 'absolute',
+          top: 14,
+          left: isGeofenceOpen ? 346 : 14,
+          zIndex: 1000,
           display: 'flex', alignItems: 'center', gap: 8,
           background: 'rgba(15, 23, 42, 0.92)', backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           border: '1px solid rgba(220, 38, 38, 0.45)', borderRadius: 20,
           padding: '5px 12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+          transition: 'left 0.2s ease',
         }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: STATUS_COLORS[selectedDriver.status] || '#b91c1c' }} />
           <span style={{ fontSize: 12, fontWeight: 600, color: '#f8fafc' }}>
@@ -517,25 +494,6 @@ export default function FleetMap({
           >
             <Shield size={13} style={{ color: isGeofenceOpen ? '#38bdf8' : '#94a3b8' }} />
             <span>Geofence ({radiusKm}k)</span>
-          </button>
-        )}
-
-        {activeDrivers.length > 0 && (
-          <button
-            onClick={handleFocusActive}
-            title={t.focusActiveVehicle}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: 'rgba(15, 23, 42, 0.88)', backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: 8,
-              color: '#34d399', fontSize: 11.5, fontWeight: 600, padding: '6px 11px',
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35)', cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <Crosshair size={13} />
-            <span>{t.focusActiveVehicle}</span>
           </button>
         )}
 
