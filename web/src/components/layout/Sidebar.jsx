@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Map, Users, AlertTriangle, BarChart3,
+  Settings, LogOut, Wifi, WifiOff, Shield, Truck,
   MapPin, Bell, Smartphone, Download
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';

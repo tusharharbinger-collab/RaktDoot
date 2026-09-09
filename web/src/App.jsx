@@ -41,14 +41,18 @@ function AppRoutes() {
   );
 }
 
+import ErrorBoundary from './components/common/ErrorBoundary';
+
 export default function App() {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <SocketProvider>
-          <AppRoutes />
-        </SocketProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <AuthProvider>
+          <SocketProvider>
+            <AppRoutes />
+          </SocketProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }
