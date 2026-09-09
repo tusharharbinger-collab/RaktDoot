@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
+import { LanguageProvider } from './context/LanguageContext';
 import AppShell from './components/layout/AppShell';
 import LoginPage from './pages/LoginPage';
 import ManagerMapPage from './pages/ManagerMapPage';
+import ManagerDestinationsPage from './pages/ManagerDestinationsPage';
+import ManagerNotificationsPage from './pages/ManagerNotificationsPage';
 import ManagerIssuesPage from './pages/ManagerIssuesPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminTelemetryPage from './pages/AdminTelemetryPage';
@@ -25,6 +28,8 @@ function AppRoutes() {
         <Route element={<AppShell />}>
           <Route index element={<DefaultRedirect />} />
           <Route path="/manager/map" element={<ManagerMapPage />} />
+          <Route path="/manager/destinations" element={<ManagerDestinationsPage />} />
+          <Route path="/manager/notifications" element={<ManagerNotificationsPage />} />
           <Route path="/manager/issues" element={<ManagerIssuesPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/telemetry" element={<AdminTelemetryPage />} />
@@ -35,8 +40,6 @@ function AppRoutes() {
     </BrowserRouter>
   );
 }
-
-import { LanguageProvider } from './context/LanguageContext';
 
 export default function App() {
   return (

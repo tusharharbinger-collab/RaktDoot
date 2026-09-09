@@ -2,8 +2,10 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const { dbGet } = require('../db/database');
-const { upsertLocation } = require('../modules/drivers/drivers.service');
-const { getAllDriversWithLocations } = require('../modules/drivers/drivers.service');
+const { upsertLocation, getAllDriversWithLocations } = require('../modules/drivers/drivers.service');
+const { getActiveAssignmentForDriver, updateAssignmentStatus } = require('../modules/assignments/assignments.service');
+const { createGeofenceNotification } = require('../modules/notifications/notifications.service');
+const { getAllDestinations } = require('../modules/destinations/destinations.service');
 
 /** @type {import('socket.io').Server} */
 let io;
@@ -13,6 +15,25 @@ const telemetry = {
   totalConnections: 0,
   locationUpdatesProcessed: 0,
 };
+
+// In-memory geofence state: Map<driverId, Set<destinationId>>
+const driverGeofenceInside = new Map();
+
+/**
+ * Calculate distance between two lat/lng points in meters (Haversine).
+ */
+function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Earth radius in meters
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 /**
  * Initialize Socket.io on the HTTP server.
@@ -62,8 +83,14 @@ function initSocket(httpServer) {
 
     // Send complete fleet state to the new watcher
     const fleetState = getAllDriversWithLocations();
+    let initialDestinations = [];
+    try {
+      initialDestinations = getAllDestinations();
+    } catch (_) {}
+
     socket.emit('initial_fleet_state', {
       drivers: fleetState,
+      destinations: initialDestinations,
       telemetry: {
         connectedClients: io.sockets.sockets.size,
         locationUpdatesProcessed: telemetry.locationUpdatesProcessed,
@@ -83,12 +110,17 @@ function initSocket(httpServer) {
       if (lat == null || lng == null) return;
 
       try {
+        const parsedLat = parseFloat(lat);
+        const parsedLng = parseFloat(lng);
+        const parsedSpeed = parseFloat(speed) || 0;
+        const parsedHeading = parseFloat(heading) || 0;
+
         upsertLocation({
           driver_id: user.id,
-          lat: parseFloat(lat),
-          lng: parseFloat(lng),
-          speed: parseFloat(speed) || 0,
-          heading: parseFloat(heading) || 0,
+          lat: parsedLat,
+          lng: parsedLng,
+          speed: parsedSpeed,
+          heading: parsedHeading,
           status: status || 'active',
           address: address || null,
         });
@@ -100,14 +132,96 @@ function initSocket(httpServer) {
           driver_id: user.id,
           driver_name: user.name,
           avatar_color: user.avatar_color,
-          lat: parseFloat(lat),
-          lng: parseFloat(lng),
-          speed: parseFloat(speed) || 0,
-          heading: parseFloat(heading) || 0,
+          lat: parsedLat,
+          lng: parsedLng,
+          speed: parsedSpeed,
+          heading: parsedHeading,
           status: status || 'active',
           address: address || null,
           updated_at: new Date().toISOString(),
         });
+
+        // ── GEOFENCE PROXIMITY CHECK ─────────────────────────────────────────
+        try {
+          const activeAssignment = getActiveAssignmentForDriver(user.id);
+          if (
+            activeAssignment &&
+            activeAssignment.destination_lat != null &&
+            activeAssignment.destination_lng != null
+          ) {
+            const distance = calculateDistanceMeters(
+              parsedLat,
+              parsedLng,
+              parseFloat(activeAssignment.destination_lat),
+              parseFloat(activeAssignment.destination_lng)
+            );
+
+            if (!driverGeofenceInside.has(user.id)) {
+              driverGeofenceInside.set(user.id, new Set());
+            }
+            const insideSet = driverGeofenceInside.get(user.id);
+            const radius = parseFloat(activeAssignment.destination_radius_m) || 500;
+            const isInsideNow = distance <= radius;
+            const wasInside = insideSet.has(activeAssignment.destination_id);
+
+            if (isInsideNow && !wasInside) {
+              insideSet.add(activeAssignment.destination_id);
+              const roundedDist = Math.round(distance);
+              const message = `Driver ${user.name} is within geofence of ${activeAssignment.destination_name} (${roundedDist}m away)`;
+
+              const notif = createGeofenceNotification({
+                manager_id: activeAssignment.assigned_by || 'all',
+                driver_id: user.id,
+                destination_id: activeAssignment.destination_id,
+                assignment_id: activeAssignment.id,
+                type: 'geofence_enter',
+                message,
+                distance_m: roundedDist,
+              });
+
+              // Alert fleet monitors
+              io.to('fleet-monitors').emit('geofence_alert', {
+                notification: notif,
+                driver_id: user.id,
+                driver_name: user.name,
+                destination_id: activeAssignment.destination_id,
+                destination_name: activeAssignment.destination_name,
+                distance_m: roundedDist,
+                type: 'enter',
+                timestamp: new Date().toISOString(),
+              });
+
+              // If accepted, auto-progress to in_progress
+              if (activeAssignment.status === 'accepted') {
+                const updatedAssignment = updateAssignmentStatus(
+                  activeAssignment.id,
+                  'in_progress',
+                  user.id,
+                  'driver'
+                );
+                io.to('fleet-monitors').emit('assignment_status_changed', {
+                  assignment: updatedAssignment,
+                });
+                io.to(`driver:${user.id}`).emit('assignment_status_changed', {
+                  assignment: updatedAssignment,
+                });
+              }
+            } else if (!isInsideNow && wasInside) {
+              insideSet.delete(activeAssignment.destination_id);
+              io.to('fleet-monitors').emit('geofence_alert', {
+                driver_id: user.id,
+                driver_name: user.name,
+                destination_id: activeAssignment.destination_id,
+                destination_name: activeAssignment.destination_name,
+                distance_m: Math.round(distance),
+                type: 'exit',
+                timestamp: new Date().toISOString(),
+              });
+            }
+          }
+        } catch (geofenceErr) {
+          console.error('[Socket] ⚠️ Geofence check warning:', geofenceErr.message);
+        }
       } catch (err) {
         console.error('[Socket] ❌ Error saving location:', err.message);
       }
@@ -151,6 +265,40 @@ function initSocket(httpServer) {
       });
     });
 
+    // ── DRIVER → TASK RESPONSE (Accept / Reject / Complete) ──────────────────
+    socket.on('task_response', (data) => {
+      if (user.role !== 'driver') return;
+      const { assignment_id, status } = data;
+      if (!assignment_id || !status) return;
+
+      try {
+        const updated = updateAssignmentStatus(assignment_id, status, user.id, 'driver');
+        io.to('fleet-monitors').emit('assignment_status_changed', {
+          assignment: updated,
+        });
+        io.to('fleet-monitors').emit('request_status_updated', {
+          assignment: updated,
+        });
+        socket.emit('assignment_status_changed', {
+          assignment: updated,
+        });
+
+        if (status === 'completed') {
+          io.to('fleet-monitors').emit('work_completed_alert', {
+            assignment_id: updated.id,
+            driver_id: updated.driver_id,
+            driver_name: updated.driver_name || user.name,
+            destination_id: updated.destination_id,
+            destination_name: updated.destination_name,
+            completed_at: updated.completed_at || new Date().toISOString(),
+            message: `WORK COMPLETED: Driver ${updated.driver_name || user.name} reached ${updated.destination_name} and completed the blood collection task!`,
+          });
+        }
+      } catch (err) {
+        console.error('[Socket] ❌ Error handling task_response:', err.message);
+      }
+    });
+
     // ── TELEMETRY PING ────────────────────────────────────────────────────────
     socket.on('request_telemetry', () => {
       if (user.role !== 'admin') return;
@@ -164,6 +312,9 @@ function initSocket(httpServer) {
     // ── DISCONNECT ────────────────────────────────────────────────────────────
     socket.on('disconnect', (reason) => {
       console.log(`[Socket] ❌ Disconnected: ${user.name} (${user.role}) — ${reason}`);
+
+      // Clean up geofence tracking memory
+      driverGeofenceInside.delete(user.id);
 
       // Mark driver offline on disconnect
       if (user.role === 'driver') {

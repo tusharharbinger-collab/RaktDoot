@@ -1,7 +1,8 @@
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Map, Users, AlertTriangle, BarChart3,
-  Settings, LogOut, Wifi, WifiOff, Shield, Truck
+  Settings, LogOut, Wifi, WifiOff, Shield, Truck,
+  MapPin, Bell
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
@@ -26,12 +27,14 @@ function NavItem({ to, icon: Icon, label, badge }) {
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
-  const { connected, issues } = useSocket();
+  const { connected, issues, unreadNotificationsCount } = useSocket();
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
 
   const managerNav = [
     { to: '/manager/map', icon: Map, label: t.liveVehicleTracking },
+    { to: '/manager/destinations', icon: MapPin, label: t.destinations || 'Destinations' },
+    { to: '/manager/notifications', icon: Bell, label: t.notifications || 'Notifications', badge: unreadNotificationsCount },
     { to: '/manager/issues', icon: AlertTriangle, label: t.issuesFeed },
   ];
 
@@ -95,7 +98,7 @@ export default function Sidebar() {
           <>
             <div className="nav-section-label">{t.dispatchOps}</div>
             {managerNav.map(n => (
-              <NavItem key={n.to} {...n} badge={n.to === '/manager/issues' ? openIssues : 0} />
+              <NavItem key={n.to} {...n} badge={n.to === '/manager/issues' ? openIssues : (n.badge || 0)} />
             ))}
           </>
         )}

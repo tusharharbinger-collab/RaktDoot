@@ -27,10 +27,118 @@ function initDB() {
     db.run(stmt);
   }
 
-  // Safe schema migrations for issues table
+  // Safe schema migrations for issues table and new features
   try { db.run('ALTER TABLE issues ADD COLUMN type TEXT DEFAULT "vehicle_breakdown"'); } catch (_) {}
   try { db.run('ALTER TABLE issues ADD COLUMN severity TEXT DEFAULT "medium"'); } catch (_) {}
   try { db.run('ALTER TABLE issues ADD COLUMN address TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE destinations ADD COLUMN radius_m REAL NOT NULL DEFAULT 500'); } catch (_) {}
+  try { db.run('ALTER TABLE destinations ADD COLUMN address TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE destinations ADD COLUMN description TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE destinations ADD COLUMN is_home INTEGER NOT NULL DEFAULT 0'); } catch (_) {}
+  try { db.run('ALTER TABLE driver_assignments ADD COLUMN status TEXT NOT NULL DEFAULT "pending"'); } catch (_) {}
+  try { db.run('ALTER TABLE driver_assignments ADD COLUMN source_name TEXT DEFAULT "Jankalyan Blood Centre (Swargate HQ)"'); } catch (_) {}
+  try { db.run('ALTER TABLE driver_assignments ADD COLUMN source_lat REAL DEFAULT 18.5039'); } catch (_) {}
+  try { db.run('ALTER TABLE driver_assignments ADD COLUMN source_lng REAL DEFAULT 73.8524'); } catch (_) {}
+  try { db.run('ALTER TABLE driver_assignments ADD COLUMN urgency TEXT DEFAULT "normal"'); } catch (_) {}
+  try { db.run('ALTER TABLE driver_assignments ADD COLUMN notes TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE users ADD COLUMN push_token TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE geofence_notifications ADD COLUMN distance_m REAL'); } catch (_) {}
+
+  // Ensure permanent Home Location (Jankalyan Blood Centre HQ, Swargate, Pune) is configured
+  try {
+    const homeStmt = db.prepare("SELECT id FROM destinations WHERE is_home = 1 OR id = 'dest-home-001'");
+    const existingHome = homeStmt.get();
+    homeStmt.finalize();
+
+    if (!existingHome) {
+      const insStmt = db.prepare(`
+        INSERT INTO destinations (id, name, address, lat, lng, radius_m, description, created_by, is_active, is_home)
+        VALUES (
+          'dest-home-001',
+          'Jankalyan Blood Centre (Home Base)',
+          'Jankalyan Blood Donation Building, Swargate, Pune, Maharashtra 411042',
+          18.5039,
+          73.8524,
+          500,
+          'Central Blood Bank & Donation Building. Dispatch starting point and manager operations center.',
+          'user-mgr-001',
+          1,
+          1
+        )
+      `);
+      insStmt.run();
+      insStmt.finalize();
+      console.log('[DB] Permanent Home Base (Swargate Pune HQ) initialized');
+    } else {
+      // Update coordinates to Pune Swargate if previously set to Mumbai
+      db.run(`
+        UPDATE destinations SET
+          name = 'Jankalyan Blood Centre (Home Base)',
+          address = 'Jankalyan Blood Donation Building, Swargate, Pune, Maharashtra 411042',
+          lat = 18.5039,
+          lng = 73.8524,
+          is_home = 1
+        WHERE id = 'dest-home-001' OR is_home = 1
+      `);
+    }
+
+    // Auto-seed key Pune hospitals for instant collection workflow
+    const puneHospitals = [
+      {
+        id: 'dest-pune-sancheti',
+        name: 'Sancheti Hospital',
+        address: '16, Shivajinagar, Pune, Maharashtra 411005',
+        lat: 18.5312,
+        lng: 73.8528,
+        radius_m: 500,
+        description: 'Speciality Orthopaedic & Trauma Centre, Shivajinagar',
+      },
+      {
+        id: 'dest-pune-rubyhall',
+        name: 'Ruby Hall Clinic',
+        address: '40, Sassoon Rd, Sangamvadi, Pune, Maharashtra 411001',
+        lat: 18.5326,
+        lng: 73.8783,
+        radius_m: 600,
+        description: 'Major Super-Speciality Hospital & Research Centre, Pune Station',
+      },
+      {
+        id: 'dest-pune-deenanath',
+        name: 'Deenanath Mangeshkar Hospital',
+        address: 'Near Mhatre Bridge, Erandwane, Pune, Maharashtra 411004',
+        lat: 18.4996,
+        lng: 73.8290,
+        radius_m: 500,
+        description: 'Multi-speciality Hospital & Blood Transfusion Centre, Erandwane',
+      },
+      {
+        id: 'dest-pune-jehangir',
+        name: 'Jehangir Hospital',
+        address: '32, Sassoon Rd, Central Railway Colony, Pune, Maharashtra 411001',
+        lat: 18.5284,
+        lng: 73.8744,
+        radius_m: 500,
+        description: 'Acute Care & Emergency Medical Services, Sassoon Road',
+      },
+    ];
+
+    for (const h of puneHospitals) {
+      const chk = db.prepare('SELECT id FROM destinations WHERE id = ?');
+      const found = chk.get([h.id]);
+      chk.finalize();
+      if (!found) {
+        const ins = db.prepare(`
+          INSERT INTO destinations (id, name, address, lat, lng, radius_m, description, created_by, is_active, is_home)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 'user-mgr-001', 1, 0)
+        `);
+        ins.run([h.id, h.name, h.address, h.lat, h.lng, h.radius_m, h.description]);
+        ins.finalize();
+        console.log(`[DB] Seeded Pune hospital: ${h.name}`);
+      }
+    }
+  } catch (err) {
+    console.warn('[DB] Destination init check warning:', err.message);
+  }
 
   console.log(`[DB] SQLite (WASM) initialized at: ${DB_PATH}`);
   return db;

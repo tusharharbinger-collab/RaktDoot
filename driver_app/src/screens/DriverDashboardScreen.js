@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, Alert, Platform, ActivityIndicator, Image
+  ScrollView, Alert, Platform, ActivityIndicator, Image, Linking
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STATUS_COLORS } from '../config/constants';
 import { socketManager } from '../services/socket';
 import { createIssue, getDriverIssues } from '../services/api';
+import { getActiveAssignment, respondToAssignment, getHomeLocation, DEFAULT_HOME_LOCATION } from '../services/assignmentApi';
 import { getExactCurrentLocation, startLocationWatcher, requestLocationPermissions } from '../services/realLocation';
 import ReportIssueModal from '../components/ReportIssueModal';
 import IssuesHistoryModal from '../components/IssuesHistoryModal';
+import TaskNotificationModal from '../components/TaskNotificationModal';
+import RouteMappingModal from '../components/RouteMappingModal';
 
 const omDropImg = require('../../assets/om_blood_drop_logo.jpg');
 const nabhBadgeImg = require('../../assets/nabh_badge_logo.jpg');
@@ -107,6 +110,60 @@ export default function DriverDashboardScreen({
   const [showReportModal, setShowReportModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [issuesHistory, setIssuesHistory] = useState([]);
+
+  // Assignment & Task states
+  const [activeAssignment, setActiveAssignment] = useState(null);
+  const [incomingTask, setIncomingTask] = useState(null);
+  const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
+  const [completingTask, setCompletingTask] = useState(false);
+  const [homeLocation, setHomeLocation] = useState(DEFAULT_HOME_LOCATION);
+  const [showRouteMappingModal, setShowRouteMappingModal] = useState(false);
+
+  // Helper: Haversine straight-line distance in km
+  const calculateDistanceKm = useCallback((lat1, lon1, lat2, lon2) => {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return (R * c).toFixed(1);
+  }, []);
+
+  // Helper: Open turn-by-turn navigation in native maps
+  const handleOpenNavigation = useCallback((lat, lng, name) => {
+    if (!lat || !lng) return;
+    const latLng = `${lat},${lng}`;
+    const label = encodeURIComponent(name || 'Delivery Destination');
+    const url = Platform.select({
+      ios: `maps:0,0?q=${label}@${latLng}`,
+      android: `geo:0,0?q=${latLng}(${label})`,
+      default: `https://www.google.com/maps/dir/?api=1&destination=${latLng}`,
+    });
+    Linking.openURL(url).catch(() => {
+      Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${latLng}`);
+    });
+  }, []);
+
+  // Live distance calculations
+  const distFromHome = (currentTelemetry?.lat && homeLocation?.lat)
+    ? calculateDistanceKm(currentTelemetry.lat, currentTelemetry.lng, homeLocation.lat, homeLocation.lng)
+    : null;
+  const isAtHomeBase = distFromHome != null && parseFloat(distFromHome) <= 0.2; // Within 200m
+
+  const distToDest = (currentTelemetry?.lat && activeAssignment && (activeAssignment.destination_lat || activeAssignment.lat))
+    ? calculateDistanceKm(
+        currentTelemetry.lat,
+        currentTelemetry.lng,
+        activeAssignment.destination_lat || activeAssignment.lat,
+        activeAssignment.destination_lng || activeAssignment.lng
+      )
+    : null;
 
   // Live GPS tracking reference
   const watcherCleanupRef = useRef(null);
@@ -228,11 +285,75 @@ export default function DriverDashboardScreen({
       .then(setIssuesHistory)
       .catch(console.error);
 
+    // Fetch permanent Home Base (Blood Donation Building)
+    getHomeLocation(serverUrl, token)
+      .then(setHomeLocation)
+      .catch(() => {});
+
+    // Fetch current active delivery assignment
+    getActiveAssignment(serverUrl, token)
+      .then(assignment => {
+        if (assignment) {
+          setActiveAssignment(assignment);
+          if (assignment.status === 'pending') {
+            setIncomingTask(assignment);
+            setIsTaskModalVisible(true);
+          }
+        }
+      })
+      .catch(err => console.warn('[Driver Assignment Load]:', err.message));
+
+    // Socket listener: incoming new assignment / collection request
+    const handleNewTask = (data) => {
+      if (data?.assignment) {
+        setIncomingTask(data.assignment);
+        setIsTaskModalVisible(true);
+      }
+    };
+
+    socketManager.on('task_assigned', handleNewTask);
+    socketManager.on('new_collection_request', handleNewTask);
+
+    // Socket listener: assignment status changes
+    socketManager.on('assignment_status_changed', (data) => {
+      if (data?.assignment) {
+        if (['cancelled', 'rejected', 'completed'].includes(data.assignment.status)) {
+          setActiveAssignment(null);
+          setShowRouteMappingModal(false);
+        } else {
+          setActiveAssignment(data.assignment);
+        }
+      }
+    });
+
     return () => {
       stopTracking();
+      socketManager.off('task_assigned', handleNewTask);
+      socketManager.off('new_collection_request', handleNewTask);
+      socketManager.off('assignment_status_changed');
       socketManager.disconnect();
     };
   }, [token, serverUrl]);
+
+  // Complete active task ("MARK WORK COMPLETED / REACHED HOSPITAL")
+  const handleCompleteTask = async () => {
+    if (!activeAssignment) return;
+    try {
+      setCompletingTask(true);
+      await respondToAssignment(serverUrl, token, activeAssignment.id, 'completed');
+      socketManager.emitTaskResponse(activeAssignment.id, 'completed');
+      setActiveAssignment(null);
+      setShowRouteMappingModal(false);
+      Alert.alert(
+        'Work Completed',
+        'Task marked completed! Reached hospital and finished blood collection delivery. Dispatch console has been updated live in real time.'
+      );
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to complete task');
+    } finally {
+      setCompletingTask(false);
+    }
+  };
 
   // Restart tracking on driverStatus changes
   useEffect(() => {
@@ -401,6 +522,131 @@ export default function DriverDashboardScreen({
           </View>
         </View>
 
+        {/* ── 1. HOME LOCATION (BLOOD DONATION BUILDING / DISPATCH ORIGIN) ── */}
+        <View style={styles.homeBaseCard}>
+          <View style={styles.homeBaseHeader}>
+            <View style={styles.homeBaseIconWrap}>
+              <Text style={{ fontSize: 18 }}>🏥</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.homeBaseBadge}>BLOOD DONATION BUILDING · HOME BASE</Text>
+              </View>
+              <Text style={styles.homeBaseTitle}>
+                {homeLocation?.name || 'Jankalyan Blood Centre (Home Base)'}
+              </Text>
+              <Text style={styles.homeBaseAddress} numberOfLines={1}>
+                {homeLocation?.address || 'Jankalyan Blood Donation Building, Central Complex, Mumbai'}
+              </Text>
+            </View>
+            <View style={[styles.homeStatusPill, { backgroundColor: isAtHomeBase ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', borderColor: isAtHomeBase ? '#10b981' : '#f59e0b' }]}>
+              <View style={[styles.statusDot, { backgroundColor: isAtHomeBase ? '#10b981' : '#f59e0b' }]} />
+              <Text style={[styles.homeStatusText, { color: isAtHomeBase ? '#34d399' : '#fbbf24' }]}>
+                {isAtHomeBase ? 'At Home Base' : (distFromHome ? `${distFromHome} km` : 'Base')}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── 2. ACTIVE DELIVERY TASK & ROUTE MAPPING (ONLY ACTIVE TILL DONE) ── */}
+        {activeAssignment && ['accepted', 'in_progress'].includes(activeAssignment.status) && (
+          <View style={[styles.activeTaskCard, activeAssignment.urgency === 'emergency' && { borderColor: '#ef4444' }]}>
+            <View style={styles.activeTaskHeader}>
+              <View style={[styles.activeTaskBadge, activeAssignment.urgency === 'emergency' && { backgroundColor: 'rgba(239, 68, 68, 0.18)', borderColor: 'rgba(239, 68, 68, 0.4)' }]}>
+                <View style={[styles.statusDot, { backgroundColor: activeAssignment.urgency === 'emergency' ? '#ef4444' : '#10b981' }]} />
+                <Text style={[styles.activeTaskBadgeText, activeAssignment.urgency === 'emergency' && { color: '#f87171' }]}>
+                  {activeAssignment.urgency ? `${activeAssignment.urgency.toUpperCase()} BLOOD COLLECTION` : (activeAssignment.status === 'in_progress' ? 'EN ROUTE / APPROACHING' : 'ACTIVE DELIVERY TASK')}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={styles.livePulseDot} />
+                <Text style={styles.activeTaskRadius}>
+                  Geofence: {activeAssignment.destination_radius_m || 500}m
+                </Text>
+              </View>
+            </View>
+
+            {/* Route Mapping Waypoints & Distance */}
+            <View style={styles.routeTransitBox}>
+              <View style={styles.routeWaypointRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                  <Text style={{ fontSize: 13 }}>🏥</Text>
+                  <Text style={styles.routeWaypointText} numberOfLines={1}>
+                    {activeAssignment.source_name || homeLocation?.name || 'Blood Donation Building'}
+                  </Text>
+                </View>
+                <Text style={styles.routeArrow}>➔</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
+                  <Text style={{ fontSize: 13 }}>🎯</Text>
+                  <Text style={[styles.routeWaypointText, { color: '#38bdf8' }]} numberOfLines={1}>
+                    {activeAssignment.destination_name}
+                  </Text>
+                </View>
+              </View>
+
+              {distToDest && (
+                <View style={styles.distRemainingRow}>
+                  <Text style={styles.distRemainingLabel}>LIVE ROUTE MAPPING TO DESTINATION:</Text>
+                  <Text style={styles.distRemainingVal}>{distToDest} km remaining</Text>
+                </View>
+              )}
+            </View>
+
+            <Text style={styles.activeTaskTitle}>
+              {activeAssignment.destination_name}
+            </Text>
+
+            {activeAssignment.destination_address ? (
+              <Text style={styles.activeTaskAddress}>
+                📍 {activeAssignment.destination_address}
+              </Text>
+            ) : null}
+
+            {(activeAssignment.notes || activeAssignment.destination_description) ? (
+              <Text style={styles.activeTaskNotes}>
+                📝 {activeAssignment.notes || activeAssignment.destination_description}
+              </Text>
+            ) : null}
+
+            {/* Navigation & Route Mapping Buttons */}
+            <View style={styles.taskNavActionsRow}>
+              <TouchableOpacity
+                style={styles.openNavBtn}
+                onPress={() => handleOpenNavigation(
+                  activeAssignment.destination_lat || activeAssignment.lat,
+                  activeAssignment.destination_lng || activeAssignment.lng,
+                  activeAssignment.destination_name || activeAssignment.name
+                )}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.openNavBtnText}>🧭 Open GPS Navigation</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.viewMapBtn}
+                onPress={() => setShowRouteMappingModal(true)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.viewMapBtnText}>🗺️ View Route</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Complete Task Button ("MARK WORK COMPLETED / REACHED HOSPITAL") */}
+            <TouchableOpacity
+              style={[styles.completeTaskBtn, completingTask && { opacity: 0.7 }]}
+              onPress={handleCompleteTask}
+              disabled={completingTask}
+              activeOpacity={0.85}
+            >
+              {completingTask ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={styles.completeTaskBtnText}>✓ MARK WORK COMPLETED / REACHED HOSPITAL</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Live Telemetry HUD (100% Emoji-Free) */}
         <View style={styles.hudCard}>
           <View style={styles.hudHeader}>
@@ -549,6 +795,41 @@ export default function DriverDashboardScreen({
         issues={issuesHistory}
         lang={lang}
       />
+
+      {/* Task Notification Modal */}
+      <TaskNotificationModal
+        visible={isTaskModalVisible}
+        assignment={incomingTask}
+        destination={incomingTask ? {
+          name: incomingTask.destination_name,
+          address: incomingTask.destination_address,
+          radius_m: incomingTask.destination_radius_m,
+          description: incomingTask.destination_description,
+          lat: incomingTask.destination_lat,
+          lng: incomingTask.destination_lng,
+        } : null}
+        currentLocation={currentTelemetry}
+        serverUrl={serverUrl}
+        token={token}
+        onAccepted={(assignment) => {
+          setActiveAssignment(assignment);
+          setIsTaskModalVisible(false);
+        }}
+        onRejected={() => {
+          setIsTaskModalVisible(false);
+        }}
+        onClose={() => setIsTaskModalVisible(false)}
+      />
+
+      {/* Live Route Mapping Modal */}
+      <RouteMappingModal
+        visible={showRouteMappingModal}
+        onClose={() => setShowRouteMappingModal(false)}
+        driverLocation={currentTelemetry}
+        destination={activeAssignment}
+        homeLocation={homeLocation}
+        remainingDistanceKm={distToDest}
+      />
     </View>
   );
 }
@@ -557,6 +838,223 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0b10',
+  },
+
+  // Active Task Card Styles
+  activeTaskCard: {
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#10b981',
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  activeTaskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  activeTaskBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.35)',
+  },
+  activeTaskBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#34d399',
+    letterSpacing: 0.5,
+  },
+  activeTaskRadius: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '600',
+  },
+  activeTaskTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 6,
+  },
+  activeTaskAddress: {
+    fontSize: 13,
+    color: '#cbd5e1',
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  activeTaskNotes: {
+    fontSize: 12,
+    color: '#94a3b8',
+    fontStyle: 'italic',
+    marginBottom: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    padding: 8,
+    borderRadius: 8,
+  },
+  completeTaskBtn: {
+    backgroundColor: '#10b981',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  completeTaskBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+
+  // Home Base Card Styles
+  homeBaseCard: {
+    backgroundColor: '#0f172a',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    padding: 14,
+    marginBottom: 14,
+    shadowColor: '#f59e0b',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  homeBaseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  homeBaseIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  homeBaseBadge: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#f59e0b',
+    letterSpacing: 0.6,
+  },
+  homeBaseTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginTop: 1,
+  },
+  homeBaseAddress: {
+    fontSize: 11,
+    color: '#94a3b8',
+    marginTop: 2,
+  },
+  homeStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  homeStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+
+  // Route Transit Box inside Active Task Card
+  routeTransitBox: {
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  routeWaypointRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  routeWaypointText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#f1f5f9',
+  },
+  routeArrow: {
+    color: '#38bdf8',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  distRemainingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  distRemainingLabel: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#94a3b8',
+    letterSpacing: 0.4,
+  },
+  distRemainingVal: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#38bdf8',
+  },
+  taskNavActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  openNavBtn: {
+    flex: 1,
+    backgroundColor: '#0284c7',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  openNavBtnText: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 12.5,
+  },
+  viewMapBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewMapBtnText: {
+    color: '#f8fafc',
+    fontWeight: '700',
+    fontSize: 12.5,
   },
 
   // 1. Institutional Top Bar

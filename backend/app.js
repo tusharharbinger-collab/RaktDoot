@@ -9,6 +9,9 @@ const authRoutes = require('./src/modules/auth/auth.routes');
 const driversRoutes = require('./src/modules/drivers/drivers.routes');
 const issuesRoutes = require('./src/modules/issues/issues.routes');
 const adminRoutes = require('./src/modules/admin/admin.routes');
+const destinationsRoutes = require('./src/modules/destinations/destinations.routes');
+const assignmentsRoutes = require('./src/modules/assignments/assignments.routes');
+const notificationsRoutes = require('./src/modules/notifications/notifications.routes');
 const { errorHandler } = require('./src/middlewares/error.middleware');
 
 const app = express();
@@ -54,6 +57,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/drivers', driversRoutes);
 app.use('/api/issues', issuesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/destinations', destinationsRoutes);
+app.use('/api/assignments', assignmentsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // ─── 404 FALLBACK ─────────────────────────────────────────────────────────────
 app.use((_req, res) => {

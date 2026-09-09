@@ -63,6 +63,12 @@ class DriverSocketManager {
     return this.emitIssueReported(issue);
   }
 
+  emitTaskResponse(assignmentId, status) {
+    if (!this.socket || !this.isConnected) return false;
+    this.socket.emit('task_response', { assignment_id: assignmentId, status });
+    return true;
+  }
+
   on(event, callback) {
     if (this.socket) {
       this.socket.on(event, callback);

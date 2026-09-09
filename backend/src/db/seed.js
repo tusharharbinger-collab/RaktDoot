@@ -77,13 +77,13 @@ const users = [
   },
 ];
 
-// Demo initial locations across Mumbai
+// Demo initial locations across Pune (around Swargate HQ at 18.5039, 73.8524)
 const initialLocations = [
-  { driver_id: 'user-drv-001', lat: 19.0760, lng: 72.8777, speed: 42, heading: 90,  status: 'active' },
-  { driver_id: 'user-drv-002', lat: 19.0830, lng: 72.8830, speed: 28, heading: 180, status: 'active' },
-  { driver_id: 'user-drv-003', lat: 19.0650, lng: 72.8700, speed: 0,  heading: 0,   status: 'idle'   },
-  { driver_id: 'user-drv-004', lat: 19.0900, lng: 72.8900, speed: 55, heading: 270, status: 'active' },
-  { driver_id: 'user-drv-005', lat: 19.0700, lng: 72.8850, speed: 0,  heading: 45,  status: 'issue'  },
+  { driver_id: 'user-drv-001', lat: 18.5080, lng: 73.8550, speed: 28, heading: 45,  status: 'active' }, // ~0.5 km (Inside 3km)
+  { driver_id: 'user-drv-002', lat: 18.5204, lng: 73.8567, speed: 36, heading: 90,  status: 'active' }, // ~1.9 km (Inside 3km)
+  { driver_id: 'user-drv-003', lat: 18.4900, lng: 73.8400, speed: 0,  heading: 0,   status: 'idle'   }, // ~2.0 km (Inside 3km)
+  { driver_id: 'user-drv-004', lat: 18.5550, lng: 73.8100, speed: 48, heading: 270, status: 'active' }, // ~7.3 km (Inside 10km, outside 5km)
+  { driver_id: 'user-drv-005', lat: 18.6280, lng: 73.8000, speed: 0,  heading: 180, status: 'issue'  }, // ~15.0 km (Inside 20km, outside 10km)
 ];
 
 async function seed() {
@@ -116,6 +116,76 @@ async function seed() {
       [loc.driver_id, loc.lat, loc.lng, loc.speed, loc.heading, loc.status]
     );
     console.log(`  ✅  Location seeded for driver ${loc.driver_id}`);
+  }
+
+  console.log('\n🎯 Seeding sample destinations in Pune...');
+  const sampleDestinations = [
+    {
+      id: 'dest-home-001',
+      name: 'Jankalyan Blood Centre (Home Base)',
+      address: 'Jankalyan Blood Donation Building, Swargate, Pune, Maharashtra 411042',
+      lat: 18.5039,
+      lng: 73.8524,
+      radius_m: 500,
+      description: 'Central Blood Bank & Donation Building. Dispatch starting point and manager operations center.',
+      created_by: 'user-mgr-001',
+      is_home: 1,
+    },
+    {
+      id: 'dest-pune-sancheti',
+      name: 'Sancheti Hospital',
+      address: '16, Shivajinagar, Pune, Maharashtra 411005',
+      lat: 18.5312,
+      lng: 73.8528,
+      radius_m: 500,
+      description: 'Speciality Orthopaedic & Trauma Centre, Shivajinagar',
+      created_by: 'user-mgr-001',
+      is_home: 0,
+    },
+    {
+      id: 'dest-pune-rubyhall',
+      name: 'Ruby Hall Clinic',
+      address: '40, Sassoon Rd, Sangamvadi, Pune, Maharashtra 411001',
+      lat: 18.5326,
+      lng: 73.8783,
+      radius_m: 600,
+      description: 'Major Super-Speciality Hospital & Research Centre, Pune Station',
+      created_by: 'user-mgr-001',
+      is_home: 0,
+    },
+    {
+      id: 'dest-pune-deenanath',
+      name: 'Deenanath Mangeshkar Hospital',
+      address: 'Near Mhatre Bridge, Erandwane, Pune, Maharashtra 411004',
+      lat: 18.4996,
+      lng: 73.8290,
+      radius_m: 500,
+      description: 'Multi-speciality Hospital & Blood Transfusion Centre, Erandwane',
+      created_by: 'user-mgr-001',
+      is_home: 0,
+    },
+    {
+      id: 'dest-pune-jehangir',
+      name: 'Jehangir Hospital',
+      address: '32, Sassoon Rd, Central Railway Colony, Pune, Maharashtra 411001',
+      lat: 18.5284,
+      lng: 73.8744,
+      radius_m: 500,
+      description: 'Acute Care & Emergency Medical Services, Sassoon Road',
+      created_by: 'user-mgr-001',
+      is_home: 0,
+    },
+  ];
+
+  for (const dest of sampleDestinations) {
+    const existing = dbGet('SELECT id FROM destinations WHERE id = ?', [dest.id]);
+    if (!existing) {
+      dbRun(`
+        INSERT INTO destinations (id, name, address, lat, lng, radius_m, description, created_by, is_active, is_home)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+      `, [dest.id, dest.name, dest.address, dest.lat, dest.lng, dest.radius_m, dest.description, dest.created_by, dest.is_home || 0]);
+      console.log(`  ✅  Destination created: ${dest.name}`);
+    }
   }
 
   console.log('\n✨ Seed complete!');

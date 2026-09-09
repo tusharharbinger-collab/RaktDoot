@@ -32,4 +32,18 @@ function updateStatus(req, res, next) {
   }
 }
 
-module.exports = { getAllDrivers, getDriverById, updateStatus };
+function registerPushToken(req, res, next) {
+  try {
+    const { push_token } = req.body;
+    if (!push_token) {
+      return res.status(400).json({ success: false, message: 'push_token is required' });
+    }
+    const { dbRun } = require('../../db/database');
+    dbRun('UPDATE users SET push_token = ? WHERE id = ?', [push_token, req.user.id]);
+    res.json({ success: true, message: 'Push token registered successfully' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getAllDrivers, getDriverById, updateStatus, registerPushToken };

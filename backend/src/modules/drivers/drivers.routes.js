@@ -11,5 +11,6 @@ router.use(authenticate);
 router.get('/', requireRole('manager', 'admin'), controller.getAllDrivers);
 router.get('/:id', requireRole('manager', 'admin', 'driver'), controller.getDriverById);
 router.put('/status', requireRole('driver', 'manager', 'admin'), controller.updateStatus);
+router.post('/push-token', requireRole('driver'), controller.registerPushToken);
 
 module.exports = router;
