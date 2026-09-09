@@ -1,12 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Map, Users, AlertTriangle, BarChart3,
-  Settings, LogOut, Wifi, WifiOff, Shield, Truck,
-  MapPin, Bell
+  MapPin, Bell, Smartphone, Download
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
-
 import omBloodDropIcon from '../../assets/om_blood_drop.svg';
 import nabhBadgeIcon from '../../assets/nabh_accredited_badge_real.png';
 import { useLanguage } from '../../context/LanguageContext';
@@ -51,11 +49,17 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       {/* Brand Header with Jankalyan & NABH Logos */}
-      <div className="sidebar-logo" style={{
-        padding: '16px 14px',
-        borderBottom: '1px solid var(--border-subtle)',
-        background: 'linear-gradient(180deg, rgba(220, 38, 38, 0.12) 0%, transparent 100%)',
-      }}>
+      <div
+        className="sidebar-logo"
+        onClick={() => navigate(isAdmin ? '/admin/users' : '/manager/map')}
+        style={{
+          padding: '16px 14px',
+          borderBottom: '1px solid var(--border-subtle)',
+          background: 'linear-gradient(180deg, rgba(220, 38, 38, 0.12) 0%, transparent 100%)',
+          cursor: 'pointer',
+        }}
+        title="Go to Map"
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <img
@@ -109,6 +113,30 @@ export default function Sidebar() {
             {adminNav.map(n => <NavItem key={n.to} {...n} />)}
           </>
         )}
+
+        <div style={{ marginTop: 'var(--space-3)' }}>
+          <div className="nav-section-label">Mobile App</div>
+          <a
+            href="https://raktdoot-backend.onrender.com/driver"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-item"
+            id="nav-driver-mobile-app"
+            title="Open Driver Mobile App on Phone"
+          >
+            <Smartphone size={16} className="nav-icon" style={{ color: '#10b981' }} />
+            <span>Driver App (Live)</span>
+          </a>
+          <a
+            href="https://raktdoot-backend.onrender.com/download/driver-app"
+            className="nav-item"
+            id="nav-download-driver-zip"
+            title="Download Driver App Source ZIP"
+          >
+            <Download size={16} className="nav-icon" style={{ color: '#3b82f6' }} />
+            <span>Download ZIP</span>
+          </a>
+        </div>
 
         <div style={{ marginTop: 'var(--space-3)' }}>
           <div className="nav-section-label">{t.system}</div>

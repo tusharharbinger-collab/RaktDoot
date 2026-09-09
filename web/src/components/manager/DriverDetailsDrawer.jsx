@@ -3,6 +3,7 @@ import { X, MapPin, Phone, Clock, Navigation, Gauge, AlertTriangle, Activity } f
 import api from '../../services/api';
 import { useSocket } from '../../context/SocketContext';
 import { formatDistanceToNow, format } from 'date-fns';
+import { getDisplayAddress } from '../../utils/geoAddress';
 
 const STATUS_COLORS = { active: 'var(--status-active)', idle: 'var(--status-idle)', issue: 'var(--status-issue)', offline: 'var(--status-offline)' };
 
@@ -87,7 +88,7 @@ export default function DriverDetailsDrawer({ driverId, onClose }) {
             {/* Driver info */}
             <div style={{ padding: 'var(--space-5)', borderBottom: '1px solid var(--border-default)' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--space-2)' }}>Driver Info</div>
-              {d.address && <InfoRow icon={MapPin} label="Location" value={d.address} />}
+              <InfoRow icon={MapPin} label="Location" value={getDisplayAddress(d)} />
               {d.phone && <InfoRow icon={Phone} label="Phone" value={d.phone} />}
               <InfoRow icon={Clock} label="Last Seen" value={d.updated_at ? formatDistanceToNow(new Date(d.updated_at), { addSuffix: true }) : 'Unknown'} />
               {detail?.created_at && <InfoRow icon={Activity} label="Joined" value={format(new Date(detail.created_at), 'dd MMM yyyy')} />}

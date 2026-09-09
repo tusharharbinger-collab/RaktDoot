@@ -77,45 +77,52 @@ const users = [
   },
 ];
 
-// Demo initial locations across Pune (around Swargate HQ at 18.5039, 73.8524)
+// Demo initial locations across Pune with exact physical addresses
 const initialLocations = [
-  { driver_id: 'user-drv-001', lat: 18.5080, lng: 73.8550, speed: 28, heading: 45,  status: 'active' }, // ~0.5 km (Inside 3km)
-  { driver_id: 'user-drv-002', lat: 18.5204, lng: 73.8567, speed: 36, heading: 90,  status: 'active' }, // ~1.9 km (Inside 3km)
-  { driver_id: 'user-drv-003', lat: 18.4900, lng: 73.8400, speed: 0,  heading: 0,   status: 'idle'   }, // ~2.0 km (Inside 3km)
-  { driver_id: 'user-drv-004', lat: 18.5550, lng: 73.8100, speed: 48, heading: 270, status: 'active' }, // ~7.3 km (Inside 10km, outside 5km)
-  { driver_id: 'user-drv-005', lat: 18.6280, lng: 73.8000, speed: 0,  heading: 180, status: 'issue'  }, // ~15.0 km (Inside 20km, outside 10km)
+  { driver_id: 'user-drv-001', lat: 18.5080, lng: 73.8550, speed: 28, heading: 45,  status: 'active', address: 'Swargate Chowk, Pune, Maharashtra' },
+  { driver_id: 'user-drv-002', lat: 18.5204, lng: 73.8567, speed: 36, heading: 90,  status: 'active', address: 'FC Road, Shivaji Nagar, Pune, Maharashtra' },
+  { driver_id: 'user-drv-003', lat: 18.4900, lng: 73.8400, speed: 0,  heading: 0,   status: 'idle',   address: 'Parvati Paytha, Pune, Maharashtra' },
+  { driver_id: 'user-drv-004', lat: 18.5550, lng: 73.8100, speed: 48, heading: 270, status: 'active', address: 'Baner Road, Pune, Maharashtra' },
+  { driver_id: 'user-drv-005', lat: 18.6280, lng: 73.8000, speed: 0,  heading: 180, status: 'issue',  address: 'Pimpri-Chinchwad, Pune, Maharashtra' },
 ];
 
-async function seed() {
-  console.log('🌱 Seeding database...\n');
+async function seedDatabase(force = false) {
+  initDB();
+
+  console.log('🌱 Ensuring demo users & locations in database...');
 
   for (const u of users) {
-    const existing = dbGet('SELECT id FROM users WHERE id = ?', [u.id]);
-    if (existing) {
-      console.log(`  ⚠️  User ${u.email} already exists — skipping`);
-      continue;
-    }
+    const existing = dbGet('SELECT id FROM users WHERE LOWER(email) = LOWER(?)', [u.email]);
     const hash = await bcrypt.hash(u.password, SALT_ROUNDS);
-    dbRun(
-      `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [u.id, u.name, u.email, hash, u.role, u.phone, u.avatar_color]
-    );
-    console.log(`  ✅  Created ${u.role.padEnd(8)} → ${u.email} (password: ${u.password})`);
+    if (existing) {
+      if (force) {
+        dbRun(
+          `UPDATE users SET password_hash = ?, role = ?, name = ?, phone = ?, avatar_color = ?, is_active = 1 WHERE id = ?`,
+          [hash, u.role, u.name, u.phone, u.avatar_color, existing.id]
+        );
+        console.log(`  🔄  Updated ${u.role.padEnd(8)} → ${u.email}`);
+      }
+    } else {
+      dbRun(
+        `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+        [u.id, u.name, u.email.toLowerCase(), hash, u.role, u.phone, u.avatar_color]
+      );
+      console.log(`  ✅  Created ${u.role.padEnd(8)} → ${u.email}`);
+    }
   }
 
-  console.log('\n📍 Seeding driver locations...');
+  console.log('📍 Seeding driver locations...');
   for (const loc of initialLocations) {
     dbRun(
-      `INSERT INTO driver_locations (driver_id, lat, lng, speed, heading, status)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO driver_locations (driver_id, lat, lng, speed, heading, status, address)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(driver_id) DO UPDATE SET
          lat=excluded.lat, lng=excluded.lng,
          speed=excluded.speed, heading=excluded.heading,
-         status=excluded.status, updated_at=datetime('now')`,
-      [loc.driver_id, loc.lat, loc.lng, loc.speed, loc.heading, loc.status]
+         status=excluded.status, address=excluded.address, updated_at=datetime('now')`,
+      [loc.driver_id, loc.lat, loc.lng, loc.speed, loc.heading, loc.status, loc.address]
     );
-    console.log(`  ✅  Location seeded for driver ${loc.driver_id}`);
   }
 
   console.log('\n🎯 Seeding sample destinations in Pune...');
@@ -188,15 +195,17 @@ async function seed() {
     }
   }
 
-  console.log('\n✨ Seed complete!');
-  console.log('\nDemo Credentials:');
-  console.log('  Admin:   admin@delivery.com     / admin123');
-  console.log('  Manager: manager@delivery.com   / manager123');
-  console.log('  Driver:  driver1@delivery.com   / driver123');
-  process.exit(0);
+  console.log('✨ Seed check complete!');
 }
 
-seed().catch(err => {
-  console.error('❌ Seed failed:', err);
-  process.exit(1);
-});
+module.exports = { seedDatabase, users, initialLocations };
+
+if (require.main === module) {
+  seedDatabase(true).then(() => {
+    console.log('✨ Manual seed complete!');
+    process.exit(0);
+  }).catch(err => {
+    console.error('❌ Seed failed:', err);
+    process.exit(1);
+  });
+}

@@ -44,7 +44,13 @@ function initSocket(httpServer) {
 
   io = new Server(httpServer, {
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, cb) => {
+        if (!origin) return cb(null, true);
+        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
+          return cb(null, true);
+        }
+        cb(null, true);
+      },
       credentials: true,
     },
     pingTimeout: 30000,
@@ -104,10 +110,22 @@ function initSocket(httpServer) {
 
     // ── DRIVER → GPS LOCATION UPDATE ─────────────────────────────────────────
     socket.on('location_update', (data) => {
-      if (user.role !== 'driver') return;
+      if (user.role !== 'driver' && user.role !== 'manager' && user.role !== 'admin') return;
 
       const { lat, lng, speed, heading, status, address } = data;
       if (lat == null || lng == null) return;
+
+      const { dbGet } = require('../db/database');
+      let effectiveAddress = (address && typeof address === 'string' && address.trim() !== '') ? address.trim() : null;
+      if (!effectiveAddress) {
+        try {
+          const row = dbGet('SELECT address FROM driver_locations WHERE driver_id = ?', [user.id]);
+          if (row?.address) effectiveAddress = row.address;
+        } catch (e) {}
+      }
+      if (!effectiveAddress && lat >= 18.40 && lat <= 18.68 && lng >= 73.70 && lng <= 74.05) {
+        effectiveAddress = 'Pashan, Pune, Maharashtra';
+      }
 
       try {
         const parsedLat = parseFloat(lat);
@@ -122,7 +140,7 @@ function initSocket(httpServer) {
           speed: parsedSpeed,
           heading: parsedHeading,
           status: status || 'active',
-          address: address || null,
+          address: effectiveAddress,
         });
 
         telemetry.locationUpdatesProcessed++;
@@ -137,7 +155,7 @@ function initSocket(httpServer) {
           speed: parsedSpeed,
           heading: parsedHeading,
           status: status || 'active',
-          address: address || null,
+          address: effectiveAddress,
           updated_at: new Date().toISOString(),
         });
 

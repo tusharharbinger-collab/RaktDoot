@@ -18,6 +18,7 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [serverUrl, setServerUrl]               = useState(DEFAULT_SERVER_URL);
   const [showServerConfig, setShowServerConfig] = useState(false);
   const [loading, setLoading]                   = useState(false);
+  const [errorMsg, setErrorMsg]                 = useState('');
 
   const [siEmail, setSiEmail]       = useState('');
   const [siPassword, setSiPassword] = useState('');
@@ -53,6 +54,7 @@ export default function LoginScreen({ onLoginSuccess }) {
 
   const switchTab = (tab) => {
     setActiveTab(tab);
+    setErrorMsg('');
     Animated.spring(tabSlide, {
       toValue: tab === 'signin' ? 0 : 1,
       useNativeDriver: false,
@@ -64,22 +66,27 @@ export default function LoginScreen({ onLoginSuccess }) {
   const pressIn  = () => Animated.spring(btnScale, { toValue: 0.96, useNativeDriver: true }).start();
   const pressOut = () => Animated.spring(btnScale, { toValue: 1,    useNativeDriver: true }).start();
 
-  const handleLogin = async () => {
-    if (!siEmail.trim() || !siPassword.trim()) {
-      Alert.alert('Required', 'Please enter your email and password.');
+  const handleLogin = async (overrideEmail, overridePassword) => {
+    const emailToUse = (overrideEmail !== undefined ? overrideEmail : siEmail).trim();
+    const passwordToUse = overridePassword !== undefined ? overridePassword : siPassword;
+
+    setErrorMsg('');
+    if (!emailToUse || !passwordToUse) {
+      const msg = 'Please enter email and password.';
+      setErrorMsg(msg);
+      Alert.alert('Required', msg);
       return;
     }
     try {
       setLoading(true);
       await storeServerUrl(serverUrl);
-      const authData = await loginDriver(serverUrl, siEmail.trim(), siPassword);
-      if (authData.user?.role !== 'driver') {
-        throw new Error('Access denied. This app is for delivery drivers only.');
-      }
+      const authData = await loginDriver(serverUrl, emailToUse, passwordToUse);
       await storeAuth(authData);
       onLoginSuccess(authData, serverUrl);
     } catch (err) {
-      Alert.alert('Login Failed', err.message);
+      const msg = err.message || 'Login failed. Please check network or credentials.';
+      setErrorMsg(msg);
+      Alert.alert('Login Failed', msg);
     } finally {
       setLoading(false);
     }
@@ -169,6 +176,12 @@ export default function LoginScreen({ onLoginSuccess }) {
                 <Text style={s.cardTitle}>Welcome Back</Text>
                 <Text style={s.cardSub}>Enter your credentials to access the Raktdoot Portal</Text>
 
+                {errorMsg ? (
+                  <View style={s.errorBanner}>
+                    <Text style={s.errorBannerText}>⚠️ {errorMsg}</Text>
+                  </View>
+                ) : null}
+
                 <Text style={s.label}>EMAIL ADDRESS / USER ID</Text>
                 <View style={[s.inputRow, siEmailFocused && s.inputRowFocused]}>
                   <TextInput style={s.input} placeholder="driver@raktdoot.com" placeholderTextColor="#94a3b8"
@@ -191,10 +204,42 @@ export default function LoginScreen({ onLoginSuccess }) {
 
                 <Animated.View style={[{ transform: [{ scale: btnScale }] }, s.btnWrap]}>
                   <TouchableOpacity style={[s.submitBtn, loading && { opacity: 0.65 }]}
-                    onPress={handleLogin} onPressIn={pressIn} onPressOut={pressOut} disabled={loading} activeOpacity={0.9}>
+                    onPress={() => handleLogin()} onPressIn={pressIn} onPressOut={pressOut} disabled={loading} activeOpacity={0.9}>
                     {loading ? <ActivityIndicator color="white" size="small" /> : <Text style={s.submitText}>Sign In</Text>}
                   </TouchableOpacity>
                 </Animated.View>
+
+                {/* 1-Click Quick Demo Driver Logins */}
+                <View style={s.quickDemoWrap}>
+                  <Text style={s.quickDemoTitle}>⚡ 1-CLICK QUICK DEMO DRIVER</Text>
+                  <View style={s.quickDemoRow}>
+                    <TouchableOpacity
+                      style={s.quickDemoBtn}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        setSiEmail('driver1@delivery.com');
+                        setSiPassword('driver123');
+                        handleLogin('driver1@delivery.com', 'driver123');
+                      }}
+                    >
+                      <Text style={s.quickDemoBtnText}>Ravi Kumar</Text>
+                      <Text style={s.quickDemoBtnSub}>Driver 1</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={s.quickDemoBtn}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        setSiEmail('driver2@delivery.com');
+                        setSiPassword('driver123');
+                        handleLogin('driver2@delivery.com', 'driver123');
+                      }}
+                    >
+                      <Text style={s.quickDemoBtnText}>Priya Sharma</Text>
+                      <Text style={s.quickDemoBtnSub}>Driver 2</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
                 <TouchableOpacity onPress={() => switchTab('register')} style={s.switchLink}>
                   <Text style={s.switchLinkText}>New driver? <Text style={s.switchLinkHighlight}>Create an account</Text></Text>
@@ -366,6 +411,14 @@ const s = StyleSheet.create({
   switchLink: { marginTop: 14, alignItems: 'center' },
   switchLinkText: { fontSize: 13, color: '#ffffff' },
   switchLinkHighlight: { color: '#fca5a5', fontWeight: '700' },
+  errorBanner: { backgroundColor: 'rgba(239,68,68,0.18)', borderWidth: 1, borderColor: '#ef4444', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 14 },
+  errorBannerText: { color: '#fca5a5', fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  quickDemoWrap: { marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
+  quickDemoTitle: { fontSize: 10, color: '#94a3b8', textAlign: 'center', letterSpacing: 0.8, fontWeight: '700', marginBottom: 8 },
+  quickDemoRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
+  quickDemoBtn: { flex: 1, backgroundColor: 'rgba(16,185,129,0.12)', borderWidth: 1, borderColor: 'rgba(16,185,129,0.35)', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
+  quickDemoBtnText: { color: '#34d399', fontSize: 11.5, fontWeight: '700' },
+  quickDemoBtnSub: { color: '#a7f3d0', fontSize: 9.5, marginTop: 1, opacity: 0.8 },
   footer: { alignItems: 'center', gap: 6 },
   poweredBy: { fontSize: 10, color: '#ffffff', letterSpacing: 1.2, textTransform: 'uppercase' },
   harbingerLogo: { width: 130, height: 40, opacity: 0.90 },

@@ -1,17 +1,29 @@
-import { Settings, Globe } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Settings, ArrowLeft, Globe } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageToggle from '../components/common/LanguageToggle';
+import { API_URL } from '../services/api';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
   const { t, lang } = useLanguage();
+  const navigate = useNavigate();
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
   return (
     <div className="page-content-full">
       <div className="topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            id="btn-back-to-map"
+            className="btn btn-secondary btn-sm"
+            onClick={() => navigate('/manager/map')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            title="Back to Fleet Map"
+          >
+            <ArrowLeft size={14} /> Back to Map
+          </button>
           <Settings size={16} style={{ color: 'var(--color-primary)' }} />
           <div><div className="topbar-title">{t.settingsTitle}</div></div>
         </div>
@@ -53,16 +65,26 @@ export default function SettingsPage() {
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{t.backendUrl}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-                  {import.meta.env.VITE_API_URL || 'http://localhost:5000'}
+                  {API_URL}
                 </div>
               </div>
             </div>
 
             <div className="divider" style={{ margin: '4px 0' }} />
 
-            <button id="btn-settings-logout" className="btn btn-danger" style={{ width: 'fit-content' }} onClick={logout}>
-              {t.signOut}
-            </button>
+            <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 4 }}>
+              <button
+                id="btn-settings-back"
+                className="btn btn-primary btn-sm"
+                onClick={() => navigate('/manager/map')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <ArrowLeft size={14} /> Back to Fleet Map
+              </button>
+              <button id="btn-settings-logout" className="btn btn-danger btn-sm" onClick={logout}>
+                {t.signOut}
+              </button>
+            </div>
           </div>
         </div>
       </div>

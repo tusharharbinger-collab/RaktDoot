@@ -6,6 +6,10 @@ const SERVER_URL_KEY = '@delivery_server_url_v1';
 export async function getStoredServerUrl(defaultUrl) {
   try {
     const stored = await AsyncStorage.getItem(SERVER_URL_KEY);
+    // If stored URL is stale localhost or internal network on a live environment, use defaultUrl
+    if (stored && (stored.includes('localhost') || stored.includes('10.0.2.2') || stored.includes('10.60.'))) {
+      return defaultUrl;
+    }
     return stored || defaultUrl;
   } catch (_) {
     return defaultUrl;

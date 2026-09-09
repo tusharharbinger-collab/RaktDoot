@@ -68,7 +68,7 @@ async function runTests() {
     const res = await request(`${BACKEND_URL}/health`);
     assert(res.status === 200, 'GET /health returns HTTP 200');
     assert(res.json?.status === 'ok', 'Status is "ok"');
-    assert(res.json?.service === 'delivery-tracking-api', 'Service is "delivery-tracking-api"');
+    assert(res.json?.service === 'raktdoot-tracking-api' || res.json?.service === 'delivery-tracking-api', 'Service is tracking API');
     assert(typeof res.json?.timestamp === 'string', 'Timestamp is present and valid string');
   } catch (err) {
     assert(false, `Health check failed: ${err.message}`);

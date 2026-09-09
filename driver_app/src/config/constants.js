@@ -1,13 +1,12 @@
 import { Platform } from 'react-native';
 
-// Default backend URL based on platform
-export const DEFAULT_SERVER_URL = Platform.select({
-  android: 'http://10.60.1.53:5000',
-  ios: 'http://10.60.1.53:5000',
-  default: 'http://localhost:5000',
-});
+// Default backend URL: dynamically uses current origin on web or cloud Render backend
+export const DEFAULT_SERVER_URL = (typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null' && !window.location.origin.includes(':8081'))
+  ? window.location.origin
+  : 'https://raktdoot-backend.onrender.com';
 
 export const PRESET_SERVER_URLS = [
+  { label: 'Cloud Live (Render)', url: 'https://raktdoot-backend.onrender.com' },
   { label: 'Local PC Wi-Fi (10.60.1.53)', url: 'http://10.60.1.53:5000' },
   { label: 'Localhost (5000)', url: 'http://localhost:5000' },
   { label: 'Hotspot Gateway (192.168.137.1)', url: 'http://192.168.137.1:5000' },

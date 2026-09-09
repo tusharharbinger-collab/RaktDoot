@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+export const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://raktdoot-backend.onrender.com');
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL;
 
 const api = axios.create({
   baseURL: `${API_URL}/api`,

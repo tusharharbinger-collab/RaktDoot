@@ -83,7 +83,7 @@ export default function LoginPage() {
             {t.heroLine1}
             <span className="highlight-red"> {t.heroLine2}</span>
           </h2>
-          <p className="hero-subtitle">{t.subtitle}</p>
+          <p className="hero-subtitle">{t.loginSubtitle || t.subtitle}</p>
 
           {/* 4 Feature Cards */}
           <div className="feature-cards-grid">
@@ -217,7 +217,7 @@ export default function LoginPage() {
                 )}
               </button>
 
-              {/* Quick credentials for the only two supported web roles: Manager and Admin */}
+              {/* Quick credentials for the supported web roles: Manager and Admin */}
               <div className="login-quick-roles">
                 <span className="login-quick-roles-title">{t.quickDemo}</span>
                 <div className="login-quick-roles-buttons">

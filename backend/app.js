@@ -26,14 +26,16 @@ app.use(cors({
     // Allow requests without Origin header (curl, mobile apps, native Postman)
     if (!origin) return cb(null, true);
 
-    // Development: automatically allow localhost, 127.0.0.1, and local private network origins
-    if (process.env.NODE_ENV !== 'production') {
-      if (/^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?$/.test(origin)) {
-        return cb(null, true);
-      }
+    // Automatically allow localhost, 127.0.0.1, and local private network origins
+    if (/^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?$/.test(origin)) {
+      return cb(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) return cb(null, true);
+    // Allow wildcard, specific configured origin, or any onrender.com origin
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
+      return cb(null, true);
+    }
+
     cb(new Error(`CORS blocked for origin: ${origin}`));
   },
   credentials: true,
@@ -44,12 +46,52 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ─── STATIC: UPLOADED ISSUE PHOTOS ───────────────────────────────────────────
+// ─── STATIC: UPLOADED ISSUE PHOTOS & DRIVER WEB APP ─────────────────────────
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
+app.use('/driver', express.static(path.resolve(__dirname, 'public/driver')));
+app.use('/_expo', express.static(path.resolve(__dirname, 'public/driver/_expo')));
+app.get(['/driver', '/driver/*'], (_req, res) => {
+  res.sendFile(path.resolve(__dirname, 'public/driver/index.html'));
+});
 
-// ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
+// Download Driver App Zip
+app.get(['/download/driver-app', '/download-driver-app'], (_req, res) => {
+  const zipPath = path.resolve(__dirname, 'public/downloads/raktdoot-driver-app.zip');
+  res.download(zipPath, 'raktdoot-driver-app.zip');
+});
+
+// ─── ROOT & HEALTH CHECK ───────────────────────────────────────────────────────
+app.get('/', (_req, res) => {
+  res.json({
+    success: true,
+    name: 'RAKTDOOT TRACKER API',
+    status: 'online',
+    message: 'Backend API is running successfully!',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'delivery-tracking-api' });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'raktdoot-tracking-api' });
+});
+
+// ─── MANUAL / AUTOMATIC SEED TRIGGER ─────────────────────────────────────────
+const { seedDatabase } = require('./src/db/seed');
+app.all('/api/seed', async (_req, res) => {
+  try {
+    await seedDatabase(true);
+    res.json({
+      success: true,
+      message: 'Database seeded successfully with demo users and locations!',
+      credentials: [
+        { role: 'manager', email: 'manager@delivery.com', password: 'manager123' },
+        { role: 'admin', email: 'admin@delivery.com', password: 'admin123' },
+        { role: 'driver', email: 'driver1@delivery.com', password: 'driver123' },
+      ],
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ─── ROUTES ───────────────────────────────────────────────────────────────────

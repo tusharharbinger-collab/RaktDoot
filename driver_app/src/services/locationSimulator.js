@@ -1,4 +1,16 @@
 // Realistic GPS Route Simulation for driver testing without physical road travel
+export const PUNE_DELIVERY_WAYPOINTS = [
+  { lat: 18.54414, lng: 73.79346, name: 'Pashan Hub (Sus Road)' },
+  { lat: 18.55100, lng: 73.79120, name: 'Pashan-Baner Link Road' },
+  { lat: 18.55900, lng: 73.78680, name: 'Baner Main Junction' },
+  { lat: 18.55800, lng: 73.80700, name: 'Aundh DP Road' },
+  { lat: 18.53800, lng: 73.83400, name: 'Pune University Circle' },
+  { lat: 18.52040, lng: 73.85670, name: 'Shivajinagar Blood Distribution Center' },
+  { lat: 18.50800, lng: 73.80500, name: 'Kothrud Paud Road Depot' },
+  { lat: 18.53600, lng: 73.78800, name: 'Pashan Lake Junction' },
+  { lat: 18.54414, lng: 73.79346, name: 'Pashan Hub (Sus Road)' },
+];
+
 export const MUMBAI_DELIVERY_WAYPOINTS = [
   { lat: 19.0596, lng: 72.8406, name: 'Bandra Station West Hub' },
   { lat: 19.0645, lng: 72.8550, name: 'Kalanagar Junction' },
@@ -13,7 +25,7 @@ export const MUMBAI_DELIVERY_WAYPOINTS = [
 ];
 
 export class LocationSimulator {
-  constructor(waypoints = MUMBAI_DELIVERY_WAYPOINTS) {
+  constructor(waypoints = PUNE_DELIVERY_WAYPOINTS) {
     this.waypoints = waypoints;
     this.currentIdx = 0;
     this.progress = 0; // 0 to 1 between current and next waypoint

@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Search, Navigation, Clock, Zap, AlertTriangle, X, ChevronRight } from 'lucide-react';
+import { Search, Navigation, Clock, Zap, AlertTriangle, MapPin, X, ChevronRight } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { formatDistanceToNow } from 'date-fns';
+import { getDisplayAddress } from '../../utils/geoAddress';
 
 const STATUS_COLORS = {
   active: 'var(--status-active)',
@@ -107,6 +108,12 @@ function DriverItem({ driver, selected, onClick }) {
               <span style={{ opacity: 0.7 }}>{lastSeen}</span>
             </>
           )}
+        </div>
+        <div className="driver-item-meta" style={{ marginTop: 2, color: '#818cf8', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <MapPin size={10} style={{ flexShrink: 0, color: '#818cf8' }} />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {getDisplayAddress(driver)}
+          </span>
         </div>
       </div>
 

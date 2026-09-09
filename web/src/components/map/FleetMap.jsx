@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap, useMa
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSocket } from '../../context/SocketContext';
+import MapPersonSearch from './MapPersonSearch';
+import { getDisplayAddress } from '../../utils/geoAddress';
 import { useLanguage } from '../../context/LanguageContext';
 import { Maximize2, Crosshair, X, MapPin, UserCheck, Shield } from 'lucide-react';
 
@@ -159,48 +161,60 @@ const STATUS_COLORS = {
   offline: '#6b7280',
 };
 
-const STATUS_EMOJI = {
-  active: '🚚',
-  idle: '⏸️',
-  issue: '🚨',
-  offline: '💤',
-};
-
 function createVehicleIcon(driver, isSelected, distanceInfo = null) {
+  const isMoving = (driver.speed || 0) > 0;
   const color = STATUS_COLORS[driver.status] || '#6b7280';
-  const emoji = STATUS_EMOJI[driver.status] || '🚚';
   const pulse = driver.status === 'issue' ? 'animation: pulse-marker 1.5s ease infinite;' : '';
-  const glow = isSelected
-    ? `box-shadow: 0 0 0 4px rgba(185,28,28,0.7), 0 0 24px rgba(185,28,28,0.5); transform: scale(1.15);`
-    : `box-shadow: 0 2px 10px rgba(0,0,0,0.5);`;
+  const movingGlow = isMoving ? 'animation: driving-glow 1.8s ease-in-out infinite, drive-bounce 0.8s ease-in-out infinite;' : '';
 
-  // Dynamic radar rings
-  const ring = driver.status === 'active'
-    ? `<div style="position:absolute;inset:-8px;border-radius:50%;border:2px solid ${color};opacity:0;animation:radar 2.5s ease-out infinite;pointer-events:none;"></div>`
-    : '';
+  const glow = isSelected
+    ? `box-shadow: 0 0 0 4px rgba(185,28,28,0.8), 0 0 24px rgba(185,28,28,0.6); transform: scale(1.18);`
+    : (isMoving ? `box-shadow: 0 0 0 3px rgba(16,185,129,0.7), 0 4px 14px rgba(16,185,129,0.5);` : `box-shadow: 0 2px 10px rgba(0,0,0,0.5);`);
+
+  // Dynamic radar wave for moving vehicle
+  const movingWave = isMoving
+    ? `<div style="position:absolute;inset:-12px;border-radius:50%;border:2px solid #10b981;opacity:0;animation:radar 1.6s ease-out infinite;pointer-events:none;"></div>`
+    : (driver.status === 'active'
+        ? `<div style="position:absolute;inset:-8px;border-radius:50%;border:2px solid ${color};opacity:0;animation:radar 2.8s ease-out infinite;pointer-events:none;"></div>`
+        : '');
 
   // Target ping for selected person
   const targetRing = isSelected
     ? `<div style="position:absolute;inset:-14px;border-radius:50%;border:3px dashed #ef4444;animation:target-ping 1.6s cubic-bezier(0,0,0.2,1) infinite;pointer-events:none;"></div>`
     : '';
 
-  // Floating person name badge when focused/selected
+  // Floating person name badge
   const nameBadge = isSelected
     ? `<div style="
         position:absolute;top:-30px;left:50%;transform:translateX(-50%);
         background:linear-gradient(135deg, #7f1d1d, #b91c1c);
         color:white;font-weight:700;font-size:11px;padding:3px 10px;
         border-radius:14px;white-space:nowrap;
-        box-shadow:0 4px 16px rgba(0,0,0,0.5);
-        border:1px solid rgba(255,255,255,0.3);
-        display:flex;align-items:center;gap:4px;z-index:20;
+        box-shadow:0 4px 16px rgba(0,0,0,0.6);
+        border:1px solid rgba(255,255,255,0.4);
+        display:flex;align-items:center;gap:4px;z-index:25;
         pointer-events:none;
-      ">🎯 ${driver.name}</div>`
+      ">🚚 ${driver.name} ${isMoving ? '🟢' : ''}</div>`
     : '';
 
-  const heading = driver.heading != null
-    ? `<div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%) rotate(${driver.heading}deg);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:8px solid ${color};"></div>`
-    : '';
+  // Dynamic heading pointer pointing in vehicle trajectory
+  const headingDeg = driver.heading || 0;
+  const heading = `<div style="
+    position:absolute;top:-8px;left:50%;
+    transform:translateX(-50%) rotate(${headingDeg}deg);
+    transform-origin: 50% 30px;
+    width:0;height:0;
+    border-left:5px solid transparent;
+    border-right:5px solid transparent;
+    border-bottom:10px solid ${isMoving ? '#34d399' : color};
+    transition: transform 0.4s ease-out;
+    filter: drop-shadow(0 0 4px ${color});
+  "></div>`;
+
+  // Speed badge with live motion highlight
+  const speedBadgeBg = isMoving ? 'linear-gradient(135deg, #059669, #10b981)' : '#0a0b0f';
+  const speedBadgeBorder = isMoving ? '1px solid #34d399' : '1px solid #333';
+  const speedText = isMoving ? `⚡ ${Math.round(driver.speed)} km/h` : `${Math.round(driver.speed || 0)} km/h`;
 
   const distBadge = distanceInfo != null
     ? `<div style="
@@ -218,27 +232,33 @@ function createVehicleIcon(driver, isSelected, distanceInfo = null) {
     <div style="position:relative;width:44px;height:44px;">
       ${nameBadge}
       ${targetRing}
-      ${ring}
+      ${movingWave}
       ${heading}
       <div style="
         width:44px;height:44px;border-radius:50%;
-        background:${color};
+        background:${isMoving ? 'linear-gradient(135deg, #059669, #10b981)' : color};
         display:flex;align-items:center;justify-content:center;
         border:3px solid white;
         ${glow}
         ${pulse}
-        font-size:18px;font-weight:700;color:white;
-        cursor:pointer;transition:transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        ${movingGlow}
+        font-size:20px;font-weight:700;color:white;
+        cursor:pointer;
         position:relative;z-index:1;
-      " title="${driver.name}">
-        ${emoji}
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      " title="${driver.name} (${Math.round(driver.speed || 0)} km/h)">
+        🚚
       </div>
       <div style="
-        position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
-        background:#0a0b0f;border:1px solid #333;border-radius:4px;
-        padding:1px 5px;font-size:10px;font-weight:600;color:white;
+        position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
+        background:${speedBadgeBg};
+        border:${speedBadgeBorder};
+        border-radius:6px;
+        padding:2px 6px;font-size:10.5px;font-weight:800;color:white;
         white-space:nowrap;font-family:monospace;
-      ">${Math.round(driver.speed || 0)} km/h</div>
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        letter-spacing: 0.2px;
+      ">${speedText}</div>
       ${distBadge}
     </div>
   `;
@@ -248,7 +268,7 @@ function createVehicleIcon(driver, isSelected, distanceInfo = null) {
     iconSize: [44, 76],
     iconAnchor: [22, 22],
     popupAnchor: [0, -26],
-    className: '',
+    className: 'smooth-moving-marker',
   });
 }
 
@@ -416,6 +436,14 @@ export default function FleetMap({
     }
   }, [mapInstance, onSelectDriver, validDrivers]);
 
+  // Handler for selecting a driver from the on-map search bar
+  const handleSelectPerson = useCallback((driverId) => {
+    onSelectDriver?.(driverId);
+    if (driverId) {
+      focusOnDriver(driverId, 16);
+    }
+  }, [onSelectDriver, focusOnDriver]);
+
   // Quick action: center on active driver
   const handleFocusActive = useCallback(() => {
     if (activeDrivers.length > 0) {
@@ -428,9 +456,20 @@ export default function FleetMap({
   return (
     <div style={{ height: '100%', width: '100%', position: 'relative', overflow: 'hidden' }}>
       <style>{`
+        .smooth-moving-marker, .leaflet-marker-icon {
+          transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1) !important;
+        }
+        @keyframes driving-glow {
+          0%, 100% { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6)); }
+          50% { filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.95)); }
+        }
+        @keyframes drive-bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2px); }
+        }
         @keyframes radar {
-          0% { opacity: 0.7; transform: scale(1); }
-          100% { opacity: 0; transform: scale(2.8); }
+          0% { opacity: 0.8; transform: scale(1); }
+          100% { opacity: 0; transform: scale(2.6); }
         }
         @keyframes target-ping {
           0% { opacity: 0.9; transform: scale(0.9); }
@@ -459,10 +498,77 @@ export default function FleetMap({
         .leaflet-popup-close-button { color: #94a3b8 !important; }
       `}</style>
 
-      {/* Selected Vehicle Floating Focus Pill (Top-Left, minimal & sleek) */}
+      {/* Floating On-Map Search Bar */}
+      <MapPersonSearch
+        drivers={fleetDriversList}
+        selectedDriverId={selectedDriverId}
+        onSelectPerson={handleSelectPerson}
+        onResetView={handleResetView}
+      />
+
+      {/* Live Active Moving Driver Floating Alert Chip */}
+      {(() => {
+        const sortedDrivers = [...validDrivers].sort((a, b) => {
+          const speedDiff = (b.speed || 0) - (a.speed || 0);
+          if (speedDiff !== 0) return speedDiff;
+          const timeA = new Date(a.updated_at || a.lastMovedTime || 0).getTime();
+          const timeB = new Date(b.updated_at || b.lastMovedTime || 0).getTime();
+          return timeB - timeA;
+        });
+        const activeTarget = sortedDrivers[0];
+        if (!activeTarget) return null;
+
+        const isMoving = (activeTarget.speed || 0) > 0;
+
+        return (
+          <div style={{
+            position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8,
+            background: 'rgba(15, 23, 42, 0.94)', backdropFilter: 'blur(12px)',
+            border: isMoving ? '1.5px solid #10b981' : '1px solid rgba(16, 185, 129, 0.4)',
+            borderRadius: 24, padding: '6px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+          }}>
+            <span style={{
+              width: 9, height: 9, borderRadius: '50%',
+              background: isMoving ? '#10b981' : '#f59e0b',
+              display: 'inline-block',
+              boxShadow: isMoving ? '0 0 10px #10b981' : 'none',
+            }} />
+            <span style={{ fontSize: 12, color: '#f8fafc', fontWeight: 600 }}>
+              {isMoving ? (
+                <span style={{ color: '#34d399', fontWeight: 700 }}>🟢 MOVING: </span>
+              ) : (
+                <span style={{ color: '#94a3b8' }}>Driver: </span>
+              )}
+              <span style={{ color: '#ffffff', fontWeight: 700 }}>{activeTarget.name}</span>
+              {activeTarget.speed > 0 ? ` · ⚡ ${Math.round(activeTarget.speed)} km/h` : ''}
+              {` · 📍 ${(() => {
+                const addr = getDisplayAddress(activeTarget);
+                return addr.length > 28 ? addr.slice(0, 28) + '...' : addr;
+              })()}`}
+            </span>
+            <button
+              onClick={() => {
+                onSelectDriver?.(activeTarget.id);
+                focusOnDriver(activeTarget.id, 16);
+              }}
+              style={{
+                background: '#b91c1c', border: 'none', borderRadius: 12,
+                color: 'white', fontSize: 11, fontWeight: 700, padding: '4px 11px',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                boxShadow: '0 2px 8px rgba(185,28,28,0.5)',
+              }}
+            >
+              🎯 Focus
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* Selected Vehicle Floating Focus Pill */}
       {selectedDriver && (
         <div style={{
-          position: 'absolute', top: 14, left: 356, zIndex: 1000,
+          position: 'absolute', top: 58, left: 14, zIndex: 1000,
           display: 'flex', alignItems: 'center', gap: 8,
           background: 'rgba(15, 23, 42, 0.92)', backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
@@ -544,6 +650,26 @@ export default function FleetMap({
         <MapInstanceBridge onMapReady={setMapInstance} />
         <MapResizer isListCollapsed={isListCollapsed} />
         <BoundsController drivers={validDrivers} selectedId={selectedDriverId} />
+
+        {/* Live Breadcrumb Route Polyline (Tracing Path as Vehicle Moves) */}
+        {validDrivers.map(driver => {
+          if (!driver.trail || driver.trail.length < 2) return null;
+          const isSelected = selectedDriverId === driver.id;
+          const isMoving = (driver.speed || 0) > 0;
+          return (
+            <Polyline
+              key={`trail-${driver.id}`}
+              positions={driver.trail}
+              pathOptions={{
+                color: isSelected ? '#6366f1' : (isMoving ? '#10b981' : '#f59e0b'),
+                weight: isSelected ? 5 : 3.5,
+                opacity: isSelected ? 0.95 : 0.75,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+          );
+        })}
 
         {/* ── MANAGER GEOFENCE RADIUS CIRCLE (1 TO 30 KM) ── */}
         {geofenceCenter && geofenceCenter.lat && geofenceCenter.lng && (
@@ -868,21 +994,19 @@ export default function FleetMap({
                     </div>
                   )}
 
-                  {driver.address && (
-                    <div style={{
-                      marginTop: 8, padding: '6px 8px',
-                      background: 'rgba(255,255,255,0.06)',
-                      borderRadius: 6,
-                      border: '1px solid rgba(255,255,255,0.1)',
-                    }}>
-                      <div style={{ fontSize: 10, color: '#f87171', fontWeight: 700, textTransform: 'uppercase', marginBottom: 2 }}>
-                        📍 Exact Physical Location
-                      </div>
-                      <div style={{ fontSize: 11, color: '#f8fafc', lineHeight: 1.3 }}>
-                        {driver.address}
-                      </div>
+                  <div style={{
+                    marginTop: 8, padding: '6px 8px',
+                    background: 'rgba(255,255,255,0.06)',
+                    borderRadius: 6,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}>
+                    <div style={{ fontSize: 10, color: '#f87171', fontWeight: 700, textTransform: 'uppercase', marginBottom: 2 }}>
+                      📍 Exact Physical Location
                     </div>
-                  )}
+                    <div style={{ fontSize: 11, color: '#f8fafc', lineHeight: 1.3 }}>
+                      {getDisplayAddress(driver)}
+                    </div>
+                  </div>
 
                   {driver.phone && (
                     <div style={{

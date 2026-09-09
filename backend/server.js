@@ -10,6 +10,10 @@ const PORT = process.env.PORT || 5000;
 // Initialize database first
 initDB();
 
+// Auto-seed default demo accounts if missing
+const { seedDatabase } = require('./src/db/seed');
+seedDatabase(false).catch(err => console.error('[DB] Auto-seed error:', err));
+
 const httpServer = http.createServer(app);
 
 // Initialize Socket.io on the same HTTP server

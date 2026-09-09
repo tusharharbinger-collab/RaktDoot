@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Map as MapIcon, PanelLeftClose, PanelLeft, Plus, Send, Shield } from 'lucide-react';
+import { Map as MapIcon, PanelLeftClose, PanelLeft, Plus, Send, Shield, Smartphone, Download } from 'lucide-react';
 import FleetMap from '../components/map/FleetMap';
 import DriverList from '../components/manager/DriverList';
 import DriverDetailsDrawer from '../components/manager/DriverDetailsDrawer';
@@ -12,7 +12,6 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageToggle from '../components/common/LanguageToggle';
-
 import harbingerLogo from '../assets/harbinger_logo_actual.png';
 
 const DEFAULT_HOME_CENTER = {
@@ -128,8 +127,8 @@ function ManagerMapContent() {
 
   return (
     <div className="page-content-full">
-      {/* Streamlined Topbar */}
-      <div className="topbar" style={{ padding: '10px 20px', minHeight: 56 }}>
+      {/* Streamlined, elegant Topbar */}
+      <div className="topbar" style={{ padding: '10px 20px', minHeight: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {/* Toggle Fleet List Button */}
           <button
@@ -178,8 +177,8 @@ function ManagerMapContent() {
           </div>
         </div>
 
-        {/* Right side: Action Buttons, Language Toggle & Corporate Logo */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Right side: Action Buttons, Driver App Link, Download ZIP, Language Toggle & Corporate Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {/* New Collection Request Button */}
           <button
             id="btn-map-new-request"
@@ -211,6 +210,54 @@ function ManagerMapContent() {
             <Plus size={14} />
             <span>{t.addDestination || 'Add Destination'}</span>
           </button>
+
+          <a
+            href="https://raktdoot-backend.onrender.com/driver"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              color: '#34d399',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontSize: '12px',
+              fontWeight: 600,
+            }}
+            title="Open Driver Mobile App on Phone"
+          >
+            <Smartphone size={14} />
+            <span>Driver App (Phone)</span>
+          </a>
+
+          <a
+            href="https://raktdoot-backend.onrender.com/download/driver-app"
+            className="btn btn-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'rgba(59, 130, 246, 0.12)',
+              border: '1px solid rgba(59, 130, 246, 0.35)',
+              color: '#93c5fd',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontSize: '12px',
+              fontWeight: 500,
+            }}
+            title="Download Driver App Source ZIP"
+          >
+            <Download size={14} />
+            <span>Download ZIP</span>
+          </a>
+
+          <div style={{ height: 20, width: 1, background: 'var(--border-default)' }} />
 
           <LanguageToggle />
 

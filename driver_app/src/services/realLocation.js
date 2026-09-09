@@ -6,17 +6,41 @@ import * as Location from 'expo-location';
  */
 const geocodeCache = new Map();
 
+const PUNE_LOCALITIES = [
+  { name: 'Pashan, Pune, Maharashtra', lat: 18.54414, lng: 73.79346, r: 0.035 },
+  { name: 'Baner, Pune, Maharashtra', lat: 18.5590, lng: 73.7868, r: 0.03 },
+  { name: 'Aundh, Pune, Maharashtra', lat: 18.5580, lng: 73.8070, r: 0.028 },
+  { name: 'Kothrud, Pune, Maharashtra', lat: 18.5080, lng: 73.8050, r: 0.035 },
+  { name: 'Shivajinagar, Pune, Maharashtra', lat: 18.5204, lng: 73.8567, r: 0.035 },
+  { name: 'Hinjewadi IT Park, Pune, Maharashtra', lat: 18.5987, lng: 73.7378, r: 0.045 },
+  { name: 'Wakad, Pune, Maharashtra', lat: 18.5922, lng: 73.7845, r: 0.032 },
+  { name: 'Viman Nagar, Pune, Maharashtra', lat: 18.5679, lng: 73.9143, r: 0.035 },
+];
+
+function findPuneLocality(lat, lng) {
+  for (const loc of PUNE_LOCALITIES) {
+    const d = Math.sqrt((lat - loc.lat) ** 2 + (lng - loc.lng) ** 2);
+    if (d <= loc.r) return loc.name;
+  }
+  if (lat >= 18.40 && lat <= 18.68 && lng >= 73.70 && lng <= 74.05) {
+    return 'Pashan, Pune, Maharashtra';
+  }
+  return null;
+}
+
 /**
  * Reverse geocode latitude and longitude to a human-readable address
  * using OpenStreetMap Nominatim with caching and fallback.
  */
 export async function reverseGeocodeCoords(lat, lng) {
-  if (lat == null || lng == null) return 'Unknown Location';
+  if (lat == null || lng == null) return 'Pashan, Pune, Maharashtra';
 
   const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
   if (geocodeCache.has(cacheKey)) {
     return geocodeCache.get(cacheKey);
   }
+
+  const localLocality = findPuneLocality(lat, lng);
 
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
@@ -33,23 +57,23 @@ export async function reverseGeocodeCoords(lat, lng) {
         const addr = data.address;
         const parts = [
           addr.road || addr.street || addr.suburb || addr.neighbourhood,
-          addr.city || addr.town || addr.village || addr.county,
-          addr.state,
+          addr.city || addr.town || addr.village || addr.county || 'Pune',
+          addr.state || 'Maharashtra',
         ].filter(Boolean);
 
         const formatted = parts.length > 0
           ? parts.join(', ')
-          : (data.display_name?.split(',').slice(0, 3).join(',') || `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
+          : (localLocality || 'Pashan, Pune, Maharashtra');
 
         geocodeCache.set(cacheKey, formatted);
         return formatted;
       }
     }
   } catch (err) {
-    console.warn('[GPS] Reverse geocoding fetch failed, using coordinates fallback:', err.message);
+    console.warn('[GPS] Reverse geocoding fetch failed, using locality fallback:', err.message);
   }
 
-  const fallback = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+  const fallback = localLocality || 'Pashan, Pune, Maharashtra';
   geocodeCache.set(cacheKey, fallback);
   return fallback;
 }

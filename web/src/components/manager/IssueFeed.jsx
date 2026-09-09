@@ -4,10 +4,8 @@ import {
   ExternalLink, MapPin, Phone, Navigation, Camera, ShieldAlert, Check
 } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
-import api from '../../services/api';
+import api, { API_URL } from '../../services/api';
 import { formatDistanceToNow, format } from 'date-fns';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const ISSUE_CATEGORY_MAP = {
   vehicle_breakdown: { label: 'Vehicle Breakdown', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.35)' },

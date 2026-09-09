@@ -52,7 +52,8 @@ async function register({ name, email, password, role = 'driver', phone }) {
 }
 
 async function login({ email, password }) {
-  const user = dbGet('SELECT * FROM users WHERE email = ?', [email]);
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const user = dbGet('SELECT * FROM users WHERE LOWER(TRIM(email)) = ?', [cleanEmail]);
   if (!user) {
     const err = new Error('Invalid email or password.');
     err.status = 401;
