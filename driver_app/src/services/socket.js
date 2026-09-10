@@ -15,7 +15,7 @@ class DriverSocketManager {
     const cleanUrl = serverUrl.replace(/\/+$/, '');
     this.socket = io(cleanUrl, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
     });
