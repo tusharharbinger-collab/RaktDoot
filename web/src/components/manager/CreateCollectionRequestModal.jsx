@@ -194,7 +194,7 @@ export default function CreateCollectionRequestModal({
           {/* 1. Source Location (Defaulted to Jankalyan HQ) */}
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              🏥 Source Dispatch Location (Origin)
+              Source Dispatch Location (Origin)
             </label>
             <div style={{
               display: 'flex',
@@ -228,7 +228,7 @@ export default function CreateCollectionRequestModal({
           {/* 2. Destination Hospital Selector */}
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              🎯 Target Hospital / Collection Center
+              Target Hospital / Collection Center
             </label>
             <select
               value={destinationId}
@@ -253,7 +253,7 @@ export default function CreateCollectionRequestModal({
             </select>
             {selectedHospital && (
               <div style={{ fontSize: 11, color: '#38bdf8', marginTop: 4 }}>
-                📍 Geofence Radius: {selectedHospital.radius_m}m · Coordinates: {parseFloat(selectedHospital.lat).toFixed(4)}, {parseFloat(selectedHospital.lng).toFixed(4)}
+                Geofence Radius: {selectedHospital.radius_m}m · Coordinates: {parseFloat(selectedHospital.lat).toFixed(4)}, {parseFloat(selectedHospital.lng).toFixed(4)}
               </div>
             )}
           </div>
@@ -261,7 +261,7 @@ export default function CreateCollectionRequestModal({
           {/* 3. Driver Selector */}
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              🚚 Assign Delivery Driver
+              Assign Delivery Driver
             </label>
             <select
               value={driverId}
@@ -294,13 +294,13 @@ export default function CreateCollectionRequestModal({
           {/* 4. Urgency Level */}
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              ⚡ Urgency Priority
+              Urgency Priority
             </label>
             <div style={{ display: 'flex', gap: 8 }}>
               {[
                 { id: 'normal', label: 'Normal Routine', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)' },
-                { id: 'urgent', label: '⚠️ Urgent', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
-                { id: 'emergency', label: '🚨 STAT / Emergency', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
+                { id: 'urgent', label: 'Urgent', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
+                { id: 'emergency', label: 'STAT / Emergency', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
               ].map(u => (
                 <button
                   key={u.id}
@@ -328,7 +328,7 @@ export default function CreateCollectionRequestModal({
           {/* 5. Additional Sample Details & Notes */}
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              📝 Sample / Blood Unit Details & Instructions
+              Sample / Blood Unit Details & Instructions
             </label>
             <textarea
               rows={2}

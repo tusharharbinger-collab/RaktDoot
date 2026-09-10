@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { respondToAssignment } from '../services/assignmentApi';
 import { socketManager } from '../services/socket';
@@ -90,6 +91,20 @@ export default function TaskNotificationModal({
               </View>
               <Text style={styles.titleText}>{dest.name || 'Delivery Hub'}</Text>
             </View>
+            <TouchableOpacity
+              onPress={onClose}
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: '#94a3b8', fontSize: 15, fontWeight: '700' }}>✕</Text>
+            </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.body} bounces={false}>
@@ -160,25 +175,52 @@ export default function TaskNotificationModal({
 
           {/* Action Buttons */}
           <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.button, styles.rejectButton]}
-              onPress={() => handleResponse('rejected')}
-              disabled={responding}
-            >
-              <Text style={styles.rejectButtonText}>Decline</Text>
-            </TouchableOpacity>
+            {assignment.status === 'pending' ? (
+              <>
+                <TouchableOpacity
+                  style={[styles.button, styles.rejectButton]}
+                  onPress={() => handleResponse('rejected')}
+                  disabled={responding}
+                >
+                  <Text style={styles.rejectButtonText}>Decline</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.button, styles.acceptButton]}
-              onPress={() => handleResponse('accepted')}
-              disabled={responding}
-            >
-              {responding ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <Text style={styles.acceptButtonText}>Accept Delivery</Text>
-              )}
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.acceptButton]}
+                  onPress={() => handleResponse('accepted')}
+                  disabled={responding}
+                >
+                  {responding ? (
+                    <ActivityIndicator color="#ffffff" size="small" />
+                  ) : (
+                    <Text style={styles.acceptButtonText}>✓ Accept Delivery</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={[styles.button, { backgroundColor: '#1e293b' }]}
+                  onPress={onClose}
+                >
+                  <Text style={{ color: '#cbd5e1', fontWeight: '700' }}>Close</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.button, styles.acceptButton]}
+                  onPress={() => {
+                    const lat = dest.lat || assignment.destination_lat;
+                    const lng = dest.lng || assignment.destination_lng;
+                    if (lat && lng) {
+                      Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+                    }
+                    onClose?.();
+                  }}
+                >
+                  <Text style={styles.acceptButtonText}>🧭 Open GPS Navigation</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       </View>

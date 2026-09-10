@@ -48,6 +48,12 @@ const translations = {
     incidentLogs: 'Incident Logs',
     alertDispatchedTitle: 'Alert Dispatched',
     alertDispatchedBody: 'Your incident has been transmitted live to the manager console.',
+    notificationTitle: 'Destination Requests & Tasks',
+    noPendingRequests: 'No pending requests. When dispatch requests you to go to a destination hospital, it will appear here.',
+    pendingDestinationRequest: 'DESTINATION REQUEST',
+    actionRequired: 'Action Required · Dispatch Request',
+    acceptAndStart: '✓ Accept & Start Route',
+    viewDetails: '📋 View Details',
     footer: '© 2026 Jankalyan Blood Centre, Pune | Powered by Harbinger Systems Pvt. Ltd.',
   },
   mr: {
@@ -79,6 +85,12 @@ const translations = {
     incidentLogs: 'तक्रार नोंदी',
     alertDispatchedTitle: 'अलर्ट पाठवला',
     alertDispatchedBody: 'तुमची तक्रार थेट व्यवस्थापक डॅशबोर्डवर पाठवली गेली आहे.',
+    notificationTitle: 'गंतव्य स्थान विनंत्या व कार्ये',
+    noPendingRequests: 'सध्या कोणतीही नवीन विनंती प्रलंबित नाही. व्यवस्थापकाकडून नवीन गंतव्य स्थान पाठवले की येथे दिसेल.',
+    pendingDestinationRequest: 'नवीन गंतव्य स्थान विनंती',
+    actionRequired: 'तात्काळ प्रतिसाद आवश्यक',
+    acceptAndStart: '✓ स्वीकारा व मार्ग सुरू करा',
+    viewDetails: '📋 तपशील पहा',
     footer: '© २०२६ जनकल्याण रक्तपेढी, पुणे | हार्बिंजर सिस्टीम्स प्रा. लि.',
   },
 };
@@ -118,6 +130,46 @@ export default function DriverDashboardScreen({
   const [completingTask, setCompletingTask] = useState(false);
   const [homeLocation, setHomeLocation] = useState(DEFAULT_HOME_LOCATION);
   const [showRouteMappingModal, setShowRouteMappingModal] = useState(false);
+
+  const hasPendingTask = (activeAssignment?.status === 'pending') || (incomingTask?.status === 'pending');
+  const hasActiveTask = activeAssignment && ['accepted', 'in_progress'].includes(activeAssignment.status);
+
+  // Poll / Refresh active assignment helper
+  const refreshActiveAssignment = useCallback(() => {
+    if (!token || !serverUrl) return;
+    getActiveAssignment(serverUrl, token)
+      .then(assignment => {
+        if (assignment) {
+          setActiveAssignment(assignment);
+          if (assignment.status === 'pending') {
+            setIncomingTask(assignment);
+          }
+        } else {
+          setActiveAssignment(null);
+        }
+      })
+      .catch(err => console.warn('[Driver Assignment Poll]:', err.message));
+  }, [token, serverUrl]);
+
+  // Quick Accept helper
+  const handleQuickAcceptTask = async (taskToAccept) => {
+    const task = taskToAccept || incomingTask || activeAssignment;
+    if (!task) return;
+    try {
+      await respondToAssignment(serverUrl, token, task.id, 'accepted');
+      socketManager.emitTaskResponse(task.id, 'accepted');
+      const updated = { ...task, status: 'accepted' };
+      setActiveAssignment(updated);
+      setIncomingTask(null);
+      setIsTaskModalVisible(false);
+      Alert.alert(
+        'Request Accepted',
+        `Destination request for ${task.destination_name} has been accepted. Route navigation and geofence tracking are now active.`
+      );
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to accept destination request');
+    }
+  };
 
   // Helper: Haversine straight-line distance in km
   const calculateDistanceKm = useCallback((lat1, lon1, lat2, lon2) => {
@@ -326,14 +378,20 @@ export default function DriverDashboardScreen({
       }
     });
 
+    // Periodic polling to guarantee real-time sync
+    const pollInterval = setInterval(() => {
+      refreshActiveAssignment();
+    }, 5000);
+
     return () => {
+      clearInterval(pollInterval);
       stopTracking();
       socketManager.off('task_assigned', handleNewTask);
       socketManager.off('new_collection_request', handleNewTask);
       socketManager.off('assignment_status_changed');
       socketManager.disconnect();
     };
-  }, [token, serverUrl]);
+  }, [token, serverUrl, refreshActiveAssignment]);
 
   // Complete active task ("MARK WORK COMPLETED / REACHED HOSPITAL")
   const handleCompleteTask = async () => {
@@ -400,20 +458,25 @@ export default function DriverDashboardScreen({
 
   return (
     <View style={styles.container}>
-      {/* 1. Institutional Top Bar — Emblems, Title, Lang Toggle, Harbinger Logo, Sign Out */}
+      {/* 1. Institutional Top Bar — Responsive 2-Row Layout (Zero Squishing on Mobile) */}
       <View style={styles.institutionalHeader}>
+        {/* Row 1: Brand Identity & Logos */}
         <View style={styles.brandRow}>
-          <Image source={omDropImg} style={styles.omDropLogo} resizeMode="contain" />
-          <Image source={nabhBadgeImg} style={styles.nabhBadgeLogo} resizeMode="cover" />
-          <View style={styles.brandTextGroup}>
-            <Text style={styles.brandTitle}>{t.tag}</Text>
-            <Text style={styles.brandSubtitle}>{t.centreTitle}</Text>
-            <Text style={styles.brandLocation}>{t.location}</Text>
+          <View style={styles.brandIdentity}>
+            <Image source={omDropImg} style={styles.omDropLogo} resizeMode="contain" />
+            <Image source={nabhBadgeImg} style={styles.nabhBadgeLogo} resizeMode="cover" />
+            <View style={styles.brandTextGroup}>
+              <Text style={styles.brandTitle} numberOfLines={1}>{t.tag}</Text>
+              <Text style={styles.brandSubtitle} numberOfLines={1}>
+                {t.centreTitle} · {t.location}
+              </Text>
+            </View>
           </View>
+          <Image source={harbingerLogo} style={styles.harbingerLogoImg} resizeMode="contain" />
         </View>
 
-        <View style={styles.topRightControls}>
-          {/* Language Selector Capsule [ मराठी | English ] */}
+        {/* Row 2: Language Capsule & Sign Out */}
+        <View style={styles.brandControlsRow}>
           <View style={styles.langToggleWrap}>
             <TouchableOpacity
               style={[styles.langBtn, lang === 'mr' && styles.langBtnActive]}
@@ -430,12 +493,6 @@ export default function DriverDashboardScreen({
               <Text style={[styles.langBtnText, lang === 'en' && styles.langBtnTextActive]}>English</Text>
             </TouchableOpacity>
           </View>
-
-          <View style={styles.vDivider} />
-
-          <Image source={harbingerLogo} style={styles.harbingerLogoImg} resizeMode="contain" />
-
-          <View style={styles.vDivider} />
 
           <TouchableOpacity onPress={onLogout} style={styles.logoutBtn} activeOpacity={0.8}>
             <Text style={styles.logoutText}>{t.exit}</Text>
@@ -460,16 +517,100 @@ export default function DriverDashboardScreen({
           </View>
         </View>
 
-        <View style={[styles.statusPill, { backgroundColor: `${STATUS_COLORS[driverStatus]}22`, borderColor: STATUS_COLORS[driverStatus] }]}>
-          <View style={[styles.statusDot, { backgroundColor: STATUS_COLORS[driverStatus] }]} />
-          <Text style={[styles.statusPillText, { color: STATUS_COLORS[driverStatus] }]}>
-            {driverStatus.toUpperCase()}
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {/* Notification Bell Button in driver sub-bar */}
+          <TouchableOpacity
+            style={[styles.subBarBellBtn, hasPendingTask && styles.subBarBellBtnPulse]}
+            onPress={() => {
+              if (activeAssignment || incomingTask) {
+                setIncomingTask(activeAssignment || incomingTask);
+                setIsTaskModalVisible(true);
+              } else {
+                Alert.alert(
+                  t.notificationTitle,
+                  t.noPendingRequests
+                );
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ fontSize: 19 }}>🔔</Text>
+            {hasPendingTask ? (
+              <View style={styles.bellBadgeRed}>
+                <Text style={styles.bellBadgeText}>1</Text>
+              </View>
+            ) : hasActiveTask ? (
+              <View style={styles.bellBadgeGreen}>
+                <Text style={styles.bellBadgeText}>✓</Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+
+          <View style={[styles.statusPill, { backgroundColor: `${STATUS_COLORS[driverStatus]}22`, borderColor: STATUS_COLORS[driverStatus] }]}>
+            <View style={[styles.statusDot, { backgroundColor: STATUS_COLORS[driverStatus] }]} />
+            <Text style={[styles.statusPillText, { color: STATUS_COLORS[driverStatus] }]}>
+              {driverStatus.toUpperCase()}
+            </Text>
+          </View>
         </View>
       </View>
 
       {/* Main Content Area */}
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* ── 0. INCOMING PENDING DESTINATION REQUEST BANNER ── */}
+        {(activeAssignment?.status === 'pending' || incomingTask?.status === 'pending') && (
+          <View style={styles.pendingRequestBanner}>
+            <View style={styles.pendingHeaderRow}>
+              <View style={styles.pendingBadgeWrap}>
+                <View style={styles.livePulseDotRed} />
+                <Text style={styles.pendingBadgeText}>
+                  {(incomingTask?.urgency === 'emergency' || activeAssignment?.urgency === 'emergency')
+                    ? '🚨 STAT / EMERGENCY DESTINATION REQUEST'
+                    : '⚡ NEW DESTINATION REQUEST'}
+                </Text>
+              </View>
+              <Text style={styles.pendingActionNotice}>{t.actionRequired}</Text>
+            </View>
+
+            <Text style={styles.pendingDestTitle}>
+              🎯 {incomingTask?.destination_name || activeAssignment?.destination_name}
+            </Text>
+
+            <Text style={styles.pendingDestAddress} numberOfLines={2}>
+              📍 {incomingTask?.destination_address || activeAssignment?.destination_address || 'Address specified by dispatch'}
+            </Text>
+
+            <View style={styles.pendingMetaRow}>
+              <Text style={styles.pendingMetaText}>
+                Pickup: <Text style={{ color: '#f8fafc', fontWeight: '700' }}>{incomingTask?.source_name || activeAssignment?.source_name || 'Jankalyan Blood Centre (Swargate HQ)'}</Text>
+              </Text>
+              <Text style={styles.pendingMetaText}>
+                Geofence: <Text style={{ color: '#f8fafc', fontWeight: '700' }}>{(incomingTask?.destination_radius_m || activeAssignment?.destination_radius_m || 500)}m</Text>
+              </Text>
+            </View>
+
+            <View style={styles.pendingActionsRow}>
+              <TouchableOpacity
+                style={styles.pendingAcceptBtn}
+                onPress={() => handleQuickAcceptTask(incomingTask || activeAssignment)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.pendingAcceptBtnText}>{t.acceptAndStart}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.pendingDetailsBtn}
+                onPress={() => {
+                  setIncomingTask(incomingTask || activeAssignment);
+                  setIsTaskModalVisible(true);
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.pendingDetailsBtnText}>{t.viewDetails}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
         {/* Shift Control Card (100% Emoji-Free) */}
         <View style={styles.shiftCard}>
           <View style={styles.shiftHeader}>
@@ -840,6 +981,181 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0b10',
   },
 
+  // Notification Bell & Badges
+  bellBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  bellBtnPulse: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: '#ef4444',
+  },
+  subBarBellBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  subBarBellBtnPulse: {
+    backgroundColor: 'rgba(239, 68, 68, 0.18)',
+    borderColor: '#ef4444',
+  },
+  bellBadgeRed: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#0a0b10',
+  },
+  bellBadgeGreen: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#10b981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#0a0b10',
+  },
+  bellBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+
+  // Pending Destination Request Banner
+  pendingRequestBanner: {
+    backgroundColor: '#181216',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#ef4444',
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  pendingHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  pendingBadgeWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.18)',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+  },
+  livePulseDotRed: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
+  },
+  pendingBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#f87171',
+    letterSpacing: 0.5,
+  },
+  pendingActionNotice: {
+    fontSize: 11,
+    color: '#fbbf24',
+    fontWeight: '700',
+  },
+  pendingDestTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 6,
+  },
+  pendingDestAddress: {
+    fontSize: 13,
+    color: '#cbd5e1',
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  pendingMetaRow: {
+    flexDirection: 'row',
+    gap: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 14,
+  },
+  pendingMetaText: {
+    fontSize: 11.5,
+    color: '#94a3b8',
+  },
+  pendingActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  pendingAcceptBtn: {
+    flex: 1.3,
+    backgroundColor: '#10b981',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  pendingAcceptBtnText: {
+    color: '#ffffff',
+    fontSize: 13.5,
+    fontWeight: '800',
+  },
+  pendingDetailsBtn: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingDetailsBtnText: {
+    color: '#38bdf8',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
   // Active Task Card Styles
   activeTaskCard: {
     backgroundColor: '#0f172a',
@@ -1059,37 +1375,46 @@ const styles = StyleSheet.create({
 
   // 1. Institutional Top Bar
   institutionalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 52 : 12,
-    paddingBottom: 12,
+    paddingHorizontal: 14,
+    paddingTop: Platform.OS === 'ios' ? 48 : 10,
+    paddingBottom: 8,
     backgroundColor: '#11131c',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    gap: 8,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  brandIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   omDropLogo: {
     width: 32,
     height: 32,
     borderRadius: 16,
+    flexShrink: 0,
   },
   nabhBadgeLogo: {
     width: 28,
     height: 28,
     borderRadius: 14,
+    flexShrink: 0,
   },
   brandTextGroup: {
-    marginLeft: 4,
+    flex: 1,
+    minWidth: 0,
   },
   brandTitle: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '800',
     color: '#ffffff',
     letterSpacing: 0.4,
@@ -1099,31 +1424,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#ef4444',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
     marginTop: 1,
   },
-  brandLocation: {
-    fontSize: 9.5,
-    color: '#94a3b8',
-  },
-
-  topRightControls: {
+  brandControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-  },
-  vDivider: {
-    width: 1,
-    height: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingTop: 2,
   },
   harbingerLogoImg: {
-    height: 22,
-    width: 80,
+    height: 20,
+    width: 76,
+    flexShrink: 0,
   },
   logoutBtn: {
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 6,
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
     borderWidth: 1,
@@ -1140,15 +1458,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
     padding: 2,
   },
   langBtn: {
     paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    borderRadius: 11,
   },
   langBtnActive: {
     backgroundColor: '#dc2626',

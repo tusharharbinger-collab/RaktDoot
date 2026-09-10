@@ -7,11 +7,13 @@ import nabhBadgeIcon from '../assets/nabh_accredited_badge_real.png';
 import Footer from '../components/layout/Footer';
 import {
   Truck, Thermometer, Clock, Award,
-  Mail, Lock, Eye, EyeOff, Zap, Phone, Shield
+  Mail, Lock, Eye, EyeOff, Zap, Phone, Shield,
+  Smartphone, Download
 } from 'lucide-react';
 
 import { useLanguage } from '../context/LanguageContext';
 import LanguageToggle from '../components/common/LanguageToggle';
+import { API_URL } from '../services/api';
 
 export default function LoginPage() {
   const { user, login, loading, error, clearError } = useAuth();
@@ -241,6 +243,69 @@ export default function LoginPage() {
                   >
                     🛡️ Admin
                   </button>
+                </div>
+              </div>
+
+              {/* Driver Mobile App & APK Access Box */}
+              <div style={{
+                marginTop: '1.25rem',
+                padding: '0.85rem 1rem',
+                background: 'rgba(239, 68, 68, 0.05)',
+                border: '1px solid rgba(239, 68, 68, 0.15)',
+                borderRadius: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: 'var(--color-primary, #b91c1c)', fontSize: '0.82rem' }}>
+                  <Truck size={16} />
+                  <span>Are you a Delivery Driver?</span>
+                </div>
+                <div style={{ color: 'var(--text-secondary, #6b7280)', lineHeight: 1.35, fontSize: '0.78rem' }}>
+                  Drivers access assignments and telemetry via the dedicated mobile application.
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.2rem' }}>
+                  <a
+                    href={`${API_URL}/driver`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    id="link-driver-app-live"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.4rem 0.75rem',
+                      background: '#10b981',
+                      color: '#ffffff',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.78rem',
+                      boxShadow: '0 1px 3px rgba(16, 185, 129, 0.25)'
+                    }}
+                  >
+                    <Smartphone size={14} /> Launch Driver App Live
+                  </a>
+                  <a
+                    href="/raktdoot-driver.apk"
+                    download="raktdoot-driver.apk"
+                    id="link-driver-apk-download"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.4rem 0.75rem',
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      border: '1px solid #d1d5db',
+                      color: '#374151',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.78rem'
+                    }}
+                  >
+                    <Download size={14} /> Download APK (70MB)
+                  </a>
                 </div>
               </div>
             </form>

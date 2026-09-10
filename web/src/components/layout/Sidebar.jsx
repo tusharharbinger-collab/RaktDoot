@@ -9,6 +9,7 @@ import { useSocket } from '../../context/SocketContext';
 import omBloodDropIcon from '../../assets/om_blood_drop.svg';
 import nabhBadgeIcon from '../../assets/nabh_accredited_badge_real.png';
 import { useLanguage } from '../../context/LanguageContext';
+import { API_URL } from '../../services/api';
 
 function NavItem({ to, icon: Icon, label, badge }) {
   return (
@@ -116,20 +117,30 @@ export default function Sidebar() {
         )}
 
         <div style={{ marginTop: 'var(--space-3)' }}>
-          <div className="nav-section-label">Mobile App</div>
+          <div className="nav-section-label">Driver Access</div>
           <a
-            href="https://raktdoot-backend.onrender.com/driver"
+            href={`${API_URL}/driver`}
             target="_blank"
             rel="noopener noreferrer"
             className="nav-item"
             id="nav-driver-mobile-app"
-            title="Open Driver Mobile App on Phone"
+            title="Launch Driver Mobile Web App Live"
           >
             <Smartphone size={16} className="nav-icon" style={{ color: '#10b981' }} />
             <span>Driver App (Live)</span>
           </a>
           <a
-            href="https://raktdoot-backend.onrender.com/download/driver-app"
+            href="/raktdoot-driver.apk"
+            download="raktdoot-driver.apk"
+            className="nav-item"
+            id="nav-download-driver-apk"
+            title="Download Driver Android APK directly"
+          >
+            <Download size={16} className="nav-icon" style={{ color: '#ec4899' }} />
+            <span>Download APK</span>
+          </a>
+          <a
+            href={`${API_URL}/download/driver-app`}
             className="nav-item"
             id="nav-download-driver-zip"
             title="Download Driver App Source ZIP"

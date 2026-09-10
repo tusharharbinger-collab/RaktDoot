@@ -50,14 +50,23 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 app.use('/driver', express.static(path.resolve(__dirname, 'public/driver')));
 app.use('/_expo', express.static(path.resolve(__dirname, 'public/driver/_expo')));
+app.use('/assets', express.static(path.resolve(__dirname, 'public/driver/assets')));
+app.use('/driver/assets', express.static(path.resolve(__dirname, 'public/driver/assets')));
 app.get(['/driver', '/driver/*'], (_req, res) => {
   res.sendFile(path.resolve(__dirname, 'public/driver/index.html'));
 });
 
 // Download Driver App Zip
+app.use('/downloads', express.static(path.resolve(__dirname, 'public/downloads')));
 app.get(['/download/driver-app', '/download-driver-app'], (_req, res) => {
   const zipPath = path.resolve(__dirname, 'public/downloads/raktdoot-driver-app.zip');
   res.download(zipPath, 'raktdoot-driver-app.zip');
+});
+
+// Download Driver APK
+app.get(['/download/apk', '/download/driver-apk', '/download/raktdoot-driver.apk', '/downloads/raktdoot-driver.apk', '/raktdoot-driver.apk'], (_req, res) => {
+  const apkPath = path.resolve(__dirname, 'public/downloads/raktdoot-driver.apk');
+  res.download(apkPath, 'raktdoot-driver.apk');
 });
 
 // ─── ROOT & HEALTH CHECK ───────────────────────────────────────────────────────
