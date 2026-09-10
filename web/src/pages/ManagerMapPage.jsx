@@ -158,23 +158,6 @@ function ManagerMapContent() {
             <span style={{ fontSize: 13.5, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>
               {t.liveBloodTransportTracking}
             </span>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.35)',
-              color: '#34d399',
-              fontSize: 10,
-              fontWeight: 700,
-              padding: '1px 7px',
-              borderRadius: 10,
-              letterSpacing: '0.3px',
-              whiteSpace: 'nowrap',
-            }}>
-              <span className="badge-dot pulse" style={{ background: '#10b981', width: 5, height: 5 }} />
-              {t.liveDispatchBadge}
-            </span>
           </div>
         </div>
 

@@ -12,7 +12,7 @@ const translations = {
 
     // Sidebar Nav & Section Labels
     dispatchOps: 'Dispatch Operations',
-    liveVehicleTracking: 'Live Vehicle Tracking',
+    liveVehicleTracking: 'Vehicle Tracking',
     destinations: 'Destinations',
     notifications: 'Notifications',
     workLogs: 'Work Logs',
@@ -75,7 +75,7 @@ const translations = {
     all: 'All',
 
     // Manager Map Page
-    liveBloodTransportTracking: 'Live Blood Transport Tracking',
+    liveBloodTransportTracking: 'Blood Transport Tracking',
     liveDispatchBadge: 'LIVE DISPATCH',
     mapSubtitle: 'Real-time cold-chain blood transport & vehicle GPS telemetry',
     bloodDeliveryVehicles: 'Blood Delivery Vehicles',
@@ -162,7 +162,7 @@ const translations = {
 
     // Sidebar Nav & Section Labels
     dispatchOps: 'प्रेषण ऑपरेशन्स (Dispatch Operations)',
-    liveVehicleTracking: 'लाईव्ह वाहन ट्रॅकिंग (Vehicle Tracking)',
+    liveVehicleTracking: 'वाहन ट्रॅकिंग (Vehicle Tracking)',
     destinations: 'वितरण ठिकाणे (Destinations)',
     notifications: 'सूचना व अलर्ट्स (Notifications)',
     workLogs: 'कार्य नोंदी (Work Logs)',
@@ -225,7 +225,7 @@ const translations = {
     all: 'सर्व (All)',
 
     // Manager Map Page
-    liveBloodTransportTracking: 'लाईव्ह रक्त वहन ट्रॅकिंग (Live Tracking)',
+    liveBloodTransportTracking: 'रक्त वहन ट्रॅकिंग (Vehicle Tracking)',
     liveDispatchBadge: 'लाईव्ह प्रेषण',
     mapSubtitle: 'कोल्ड-चेन रक्त वहन व वाहन GPS टेलिमेट्री रिअल-टाईम मॉनिटरिंग',
     bloodDeliveryVehicles: 'रक्त वितरण वाहने',

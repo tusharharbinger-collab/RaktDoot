@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Map, Users, AlertTriangle, BarChart3, Activity,
-  Settings, LogOut, Wifi, WifiOff, Shield, Truck,
+  Settings, LogOut, Shield, Truck,
   MapPin, Bell, Smartphone, Download, ClipboardList, FileText
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -58,14 +58,16 @@ export default function Sidebar() {
         onClick={() => navigate(isAdmin ? '/admin/users' : '/manager/map')}
         style={{
           height: 'var(--topbar-height)',
+          minHeight: 'var(--topbar-height)',
+          boxSizing: 'border-box',
           padding: '0 12px',
-          borderBottom: '1px solid var(--border-subtle)',
+          borderBottom: '1px solid rgba(185, 28, 28, 0.22)',
           background: 'linear-gradient(180deg, rgba(220, 38, 38, 0.12) 0%, transparent 100%)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
         }}
-        title="Go to Map"
+        title={connected ? "Socket Connected (Click to go to Map)" : "Disconnected (Click to go to Map)"}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
@@ -88,15 +90,18 @@ export default function Sidebar() {
               Jankalyan Blood Centre
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Connection indicator */}
-      <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: connected ? 'var(--color-success)' : 'var(--color-danger)' }}>
-          {connected ? <Wifi size={12} /> : <WifiOff size={12} />}
-          <span style={{ fontWeight: 600 }}>{connected ? t.liveConnected : t.disconnected}</span>
-          {connected && <span className="badge-dot pulse" style={{ marginLeft: 'auto' }} />}
+          {/* Subtle connection dot */}
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              backgroundColor: connected ? '#10b981' : '#ef4444',
+              flexShrink: 0,
+              boxShadow: connected ? '0 0 6px rgba(16, 185, 129, 0.6)' : 'none',
+            }}
+            title={connected ? 'Connected' : 'Disconnected'}
+          />
         </div>
       </div>
 
@@ -113,8 +118,10 @@ export default function Sidebar() {
 
         {isAdmin && (
           <>
-            <div className="nav-section-label" style={{ marginTop: 'var(--space-3)' }}>{t.administration}</div>
-            {adminNav.map(n => <NavItem key={n.to} {...n} />)}
+            <div className="nav-section-label">{t.administration}</div>
+            {adminNav.map(n => (
+              <NavItem key={n.to} {...n} />
+            ))}
           </>
         )}
 
@@ -126,10 +133,10 @@ export default function Sidebar() {
             rel="noopener noreferrer"
             className="nav-item"
             id="nav-driver-mobile-app"
-            title="Launch Driver Mobile Web App Live"
+            title="Launch Driver Mobile Web App"
           >
             <Smartphone size={16} className="nav-icon" style={{ color: '#10b981' }} />
-            <span>Driver App (Live)</span>
+            <span>Driver App</span>
           </a>
           <a
             href={`${API_URL}/download/apk`}

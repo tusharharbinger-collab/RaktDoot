@@ -196,16 +196,6 @@ export default function DriverList({ selectedId, onSelect, onClose }) {
               {counts.all}
             </span>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              fontSize: 11, fontWeight: 600, color: '#34d399',
-            }}>
-              <span className="badge-dot pulse" style={{ width: 6, height: 6, background: '#10b981' }} />
-              {t.live}
-            </span>
-          </div>
         </div>
 
         {/* Master Fleet Search */}

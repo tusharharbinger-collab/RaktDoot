@@ -389,8 +389,11 @@ tbody td:first-child { color: var(--text-primary); font-weight: 500; }
 }
 
 .sidebar-logo {
-  padding: var(--space-5) var(--space-5);
-  border-bottom: 1px solid var(--border-subtle);
+  height: var(--topbar-height);
+  min-height: var(--topbar-height);
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(185, 28, 28, 0.22);
   display: flex;
   align-items: center;
   gap: var(--space-3);
