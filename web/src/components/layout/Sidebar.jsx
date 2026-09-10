@@ -132,7 +132,7 @@ export default function Sidebar() {
             <span>Driver App (Live)</span>
           </a>
           <a
-            href="/raktdoot-driver.apk"
+            href={`${API_URL}/download/apk`}
             download="raktdoot-driver.apk"
             className="nav-item"
             id="nav-download-driver-apk"

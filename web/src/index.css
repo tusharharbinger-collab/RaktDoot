@@ -922,15 +922,16 @@ tbody td:first-child { color: var(--text-primary); font-weight: 500; }
    JANKALYAN BRANDED MANAGER LOGIN SCREEN (NO SCROLLING)
 ═══════════════════════════════════════════════════════════════ */
 .brand-login-page {
+  min-height: 100vh;
   height: 100vh;
-  max-height: 100vh;
   background-color: #090507;
   color: #ffffff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: var(--font-sans);
 }
 
@@ -1007,16 +1008,16 @@ tbody td:first-child { color: var(--text-primary); font-weight: 500; }
   z-index: 2;
   flex: 1;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  padding: 20px 48px 0;
+  padding: 12px 48px;
   gap: 48px;
 }
 
-/* Left Section — anchored to top */
+/* Left Section — balanced layout */
 .brand-info-section {
   flex: 1;
   max-width: 580px;
@@ -1024,12 +1025,12 @@ tbody td:first-child { color: var(--text-primary); font-weight: 500; }
   margin-top: 0;
 }
 
-/* Right Section — self-centers vertically beside left content, fills ~half */
+/* Right Section — self-centers vertically beside left content */
 .brand-signin-section {
-  width: 420px;
+  width: 100%;
+  max-width: 420px;
   flex-shrink: 0;
   margin-top: 0;
-  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
