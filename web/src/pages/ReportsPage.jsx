@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  FileText, Download, Printer, Calendar, RefreshCw,
+  FileText, Calendar, RefreshCw,
   Users, Building2, ChevronDown, Check, ArrowDownToLine,
   Filter, Sparkles
 } from 'lucide-react';
@@ -119,25 +119,6 @@ export default function ReportsPage() {
       });
   };
 
-  // Export JSON Handler
-  const handleDownloadJSON = () => {
-    const activeData = activeTab === 'driver' ? driverReportData : hospitalReportData;
-    if (!activeData) return;
-
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(activeData, null, 2));
-    const a = document.createElement('a');
-    a.href = dataStr;
-    a.download = `raktdoot-${activeTab}-report-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
-  // Print / Save as PDF
-  const handlePrint = () => {
-    window.print();
-  };
-
   const driversList = driverReportData?.driversList || [];
   const hospitalsList = hospitalReportData?.hospitalsList || [];
 
@@ -205,39 +186,38 @@ export default function ReportsPage() {
             </button>
           </div>
 
-          {/* Export Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {/* Export Action Button - CSV Only */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               id="btn-download-csv"
-              className="btn btn-secondary"
+              className="btn"
               onClick={handleDownloadCSV}
-              title="Download Excel / CSV spreadsheet"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
+              title="Download Excel / CSV spreadsheet report"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                padding: '8px 16px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(16, 185, 129, 0.25)';
+                e.currentTarget.style.borderColor = '#10b981';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+                e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+              }}
             >
-              <ArrowDownToLine size={14} style={{ color: '#10b981' }} />
+              <ArrowDownToLine size={16} style={{ color: '#10b981' }} />
               <span>{t.downloadCSV || 'Download CSV'}</span>
-            </button>
-
-            <button
-              id="btn-download-json"
-              className="btn btn-ghost"
-              onClick={handleDownloadJSON}
-              title="Download structured JSON"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
-            >
-              <Download size={14} style={{ color: '#38bdf8' }} />
-              <span>{t.downloadJSON || 'Download JSON'}</span>
-            </button>
-
-            <button
-              id="btn-print-pdf"
-              className="btn btn-secondary"
-              onClick={handlePrint}
-              title="Print formatted PDF report"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
-            >
-              <Printer size={14} style={{ color: '#a78bfa' }} />
-              <span>{t.printPDF || 'Print / PDF'}</span>
             </button>
           </div>
         </div>

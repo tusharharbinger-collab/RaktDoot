@@ -176,6 +176,8 @@ function getDriverReport({ driverId = 'all', period = 'last_30_days', startDate 
         acceptance_rate: dAssign.length > 0 ? Math.round(((dAssign.length - dRej) / dAssign.length) * 100) : 100,
         total_distance_km: Math.round(dDist * 10) / 10,
         total_duration_mins: dMins,
+        total_duration_hours: (dMins / 60).toFixed(1),
+        avg_duration_mins: dWork.length > 0 ? Math.round(dMins / dWork.length) : 0,
         issues_count: dIssues.length,
       });
     }
@@ -200,6 +202,9 @@ function getDriverReport({ driverId = 'all', period = 'last_30_days', startDate 
       total_duration_hours: (totalDurationMins / 60).toFixed(1),
       avg_duration_mins: avgDurationMins,
       avg_speed_kmh: avgSpeedKmh,
+      emergency_count: emergencyCount,
+      urgent_count: urgentCount,
+      normal_count: normalCount,
       total_issues: issues.length,
       urgency_breakdown: {
         emergency: emergencyCount,
@@ -337,6 +342,8 @@ function getHospitalReport({ destinationId = 'all', period = 'last_30_days', sta
         total_deliveries: hDeliveries.length,
         total_requests: hAssign.length,
         emergency_count: hDeliveries.filter(w => w.urgency === 'emergency').length,
+        urgent_count: hDeliveries.filter(w => w.urgency === 'urgent').length,
+        normal_count: hDeliveries.filter(w => w.urgency === 'normal' || !w.urgency).length,
         avg_delivery_mins: hDeliveries.length > 0 ? Math.round(hMins / hDeliveries.length) : 0,
         total_distance_km: Math.round(hDist * 10) / 10,
         unique_drivers: hDrivers,
