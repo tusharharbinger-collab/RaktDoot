@@ -199,7 +199,7 @@ export default function LoginScreen({ onLoginSuccess }) {
 
                 <Text style={s.label}>EMAIL ADDRESS / USER ID</Text>
                 <View style={[s.inputRow, siEmailFocused && s.inputRowFocused]}>
-                  <TextInput style={s.input} placeholder="driver@raktdoot.com" placeholderTextColor="#94a3b8"
+                  <TextInput style={s.input} placeholder="Enter your email" placeholderTextColor="#94a3b8"
                     value={siEmail} onChangeText={setSiEmail} autoCapitalize="none"
                     keyboardType="email-address" autoCorrect={false}
                     onFocus={() => setSiEmailFocused(true)} onBlur={() => setSiEmailFocused(false)} />
@@ -207,7 +207,7 @@ export default function LoginScreen({ onLoginSuccess }) {
 
                 <Text style={s.label}>PASSWORD</Text>
                 <View style={[s.inputRow, siPassFocused && s.inputRowFocused]}>
-                  <TextInput style={[s.input, { flex: 1 }]} placeholder="password" placeholderTextColor="#94a3b8"
+                  <TextInput style={[s.input, { flex: 1 }]} placeholder="Enter your password" placeholderTextColor="#94a3b8"
                     value={siPassword} onChangeText={setSiPassword} secureTextEntry={!siShowPass}
                     autoCorrect={false} onFocus={() => setSiPassFocused(true)} onBlur={() => setSiPassFocused(false)} />
                   <TouchableOpacity onPress={() => setSiShowPass(v => !v)} style={s.eyeBtn} hitSlop={{ top:10,bottom:10,left:10,right:10 }}>
@@ -238,7 +238,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 <Text style={s.label}>FULL NAME *</Text>
                 <View style={[s.inputRow, rgNameFocused && s.inputRowFocused]}>
                   <Text style={s.inputIcon}>👤</Text>
-                  <TextInput style={s.input} placeholder="Ramesh Kumar" placeholderTextColor="#94a3b8"
+                  <TextInput style={s.input} placeholder="Full Name" placeholderTextColor="#94a3b8"
                     value={rgName} onChangeText={setRgName} autoCorrect={false}
                     onFocus={() => setRgNameFocused(true)} onBlur={() => setRgNameFocused(false)} />
                 </View>
@@ -246,7 +246,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 <Text style={s.label}>EMAIL ADDRESS *</Text>
                 <View style={[s.inputRow, rgEmailFocused && s.inputRowFocused]}>
                   <Text style={s.inputIcon}>📧</Text>
-                  <TextInput style={s.input} placeholder="driver@raktdoot.com" placeholderTextColor="#94a3b8"
+                  <TextInput style={s.input} placeholder="Enter your email" placeholderTextColor="#94a3b8"
                     value={rgEmail} onChangeText={setRgEmail} autoCapitalize="none"
                     keyboardType="email-address" autoCorrect={false}
                     onFocus={() => setRgEmailFocused(true)} onBlur={() => setRgEmailFocused(false)} />
