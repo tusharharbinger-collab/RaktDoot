@@ -130,12 +130,8 @@ async function seedDatabase(force = false) {
   console.log('📍 Seeding driver locations...');
   for (const loc of initialLocations) {
     dbRun(
-      `INSERT INTO driver_locations (driver_id, lat, lng, speed, heading, status, address)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(driver_id) DO UPDATE SET
-         lat=excluded.lat, lng=excluded.lng,
-         speed=excluded.speed, heading=excluded.heading,
-         status=excluded.status, address=excluded.address, updated_at=datetime('now')`,
+      `INSERT OR REPLACE INTO driver_locations (driver_id, lat, lng, speed, heading, status, address, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
       [loc.driver_id, loc.lat, loc.lng, loc.speed, loc.heading, loc.status, loc.address]
     );
   }

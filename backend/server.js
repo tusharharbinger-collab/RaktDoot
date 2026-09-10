@@ -14,6 +14,10 @@ initDB();
 const { seedDatabase } = require('./src/db/seed');
 seedDatabase(false).catch(err => console.error('[DB] Auto-seed error:', err));
 
+// Initialize Supabase PostgreSQL Cloud Sync
+const { initSupabaseSync } = require('./src/db/supabase_sync');
+initSupabaseSync().catch(err => console.warn('[Supabase Sync Warning]:', err.message));
+
 const httpServer = http.createServer(app);
 
 // Initialize Socket.io on the same HTTP server
