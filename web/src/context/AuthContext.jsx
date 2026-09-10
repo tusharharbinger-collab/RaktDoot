@@ -3,11 +3,6 @@ import api from '../services/api';
 
 const AuthContext = createContext(null);
 
-const DEMO_ACCOUNTS = [
-  { label: 'Manager', email: 'manager@delivery.com', password: 'manager123', role: 'manager' },
-  { label: 'Admin', email: 'admin@delivery.com', password: 'admin123', role: 'admin' },
-];
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
@@ -77,7 +72,7 @@ export function AuthProvider({ children }) {
   const clearError = useCallback(() => setError(''), []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, error, login, logout, clearError, demoAccounts: DEMO_ACCOUNTS }}>
+    <AuthContext.Provider value={{ user, token, loading, error, login, logout, clearError }}>
       {children}
     </AuthContext.Provider>
   );

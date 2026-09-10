@@ -224,38 +224,6 @@ export default function LoginScreen({ onLoginSuccess }) {
                   </TouchableOpacity>
                 </Animated.View>
 
-                {/* 1-Click Quick Demo Driver Logins */}
-                <View style={s.quickDemoWrap}>
-                  <Text style={s.quickDemoTitle}>⚡ 1-CLICK QUICK DEMO DRIVER</Text>
-                  <View style={s.quickDemoRow}>
-                    <TouchableOpacity
-                      style={s.quickDemoBtn}
-                      activeOpacity={0.8}
-                      onPress={() => {
-                        setSiEmail('driver1@delivery.com');
-                        setSiPassword('driver123');
-                        handleLogin('driver1@delivery.com', 'driver123');
-                      }}
-                    >
-                      <Text style={s.quickDemoBtnText}>Ravi Kumar</Text>
-                      <Text style={s.quickDemoBtnSub}>Driver 1</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={s.quickDemoBtn}
-                      activeOpacity={0.8}
-                      onPress={() => {
-                        setSiEmail('driver2@delivery.com');
-                        setSiPassword('driver123');
-                        handleLogin('driver2@delivery.com', 'driver123');
-                      }}
-                    >
-                      <Text style={s.quickDemoBtnText}>Priya Sharma</Text>
-                      <Text style={s.quickDemoBtnSub}>Driver 2</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
                 <TouchableOpacity onPress={() => switchTab('register')} style={s.switchLink}>
                   <Text style={s.switchLinkText}>New driver? <Text style={s.switchLinkHighlight}>Create an account</Text></Text>
                 </TouchableOpacity>
@@ -477,13 +445,7 @@ const s = StyleSheet.create({
   switchLinkHighlight: { color: '#fca5a5', fontWeight: '700' },
   errorBanner: { backgroundColor: 'rgba(239,68,68,0.18)', borderWidth: 1, borderColor: '#ef4444', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 14 },
   errorBannerText: { color: '#fca5a5', fontSize: 12, fontWeight: '700', textAlign: 'center' },
-  quickDemoWrap: { marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
-  quickDemoTitle: { fontSize: 10, color: '#94a3b8', textAlign: 'center', letterSpacing: 0.8, fontWeight: '700', marginBottom: 8 },
-  quickDemoRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
-  quickDemoBtn: { flex: 1, backgroundColor: 'rgba(16,185,129,0.12)', borderWidth: 1, borderColor: 'rgba(16,185,129,0.35)', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
-  quickDemoBtnText: { color: '#34d399', fontSize: 11.5, fontWeight: '700' },
-  quickDemoBtnSub: { color: '#a7f3d0', fontSize: 9.5, marginTop: 1, opacity: 0.8 },
-  footer: { alignItems: 'center', gap: 8, marginTop: 10 },
+  footer: { alignItems: 'center', gap: 8, marginTop: 16 },
   harbingerLogo: { width: 160, height: 34, opacity: 0.95 },
   copyright: { fontSize: 11, color: '#ffffff', textAlign: 'center' },
 });

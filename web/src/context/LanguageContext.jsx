@@ -144,7 +144,6 @@ const translations = {
     emailLabel: 'EMAIL ADDRESS / USER ID',
     passwordLabel: 'PASSWORD',
     submitBtn: 'Sign In',
-    quickDemo: 'Quick Demo Login',
     cards: [
       { title: 'Live GPS Tracking', desc: 'Accurate vehicle location & ETA updates' },
       { title: 'Cold-Chain Monitoring', desc: '+2°C to +6°C temperature control' },
@@ -295,7 +294,6 @@ const translations = {
     emailLabel: 'ईमेल पत्ता / वापरकर्ता आयडी',
     passwordLabel: 'संकेतशब्द (पासवर्ड)',
     submitBtn: 'प्रवेश करा (Sign In)',
-    quickDemo: 'जलद प्रात्यक्षिक प्रवेश (Quick Demo)',
     cards: [
       { title: 'लाईव्ह GPS ट्रॅकिंग', desc: 'वाहनांचे अचूक लाईव्ह लोकेशन व ETA ट्रॅकिंग' },
       { title: 'कोल्ड-चेन मॉनिटरिंग', desc: '+२°C ते +६°C सुरक्षित तापमान नियंत्रण' },

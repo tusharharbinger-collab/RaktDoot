@@ -12,12 +12,6 @@ export const PRESET_SERVER_URLS = [
   { label: 'Android Emulator (10.0.2.2)', url: 'http://10.0.2.2:5000' },
 ];
 
-export const DEMO_CREDENTIALS = {
-  email: 'driver1@delivery.com',
-  password: 'driver123',
-  name: 'Ravi Kumar',
-};
-
 export const STATUS_COLORS = {
   active: '#10b981', // Green
   idle: '#f59e0b',   // Amber

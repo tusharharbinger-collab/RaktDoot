@@ -219,33 +219,6 @@ export default function LoginPage() {
                 )}
               </button>
 
-              {/* Quick credentials for the supported web roles: Manager and Admin */}
-              <div className="login-quick-roles">
-                <span className="login-quick-roles-title">{t.quickDemo}</span>
-                <div className="login-quick-roles-buttons">
-                  <button
-                    type="button"
-                    className="quick-role-btn"
-                    onClick={() => {
-                      setEmail('manager@delivery.com');
-                      setPassword('manager123');
-                    }}
-                  >
-                    👔 Manager
-                  </button>
-                  <button
-                    type="button"
-                    className="quick-role-btn"
-                    onClick={() => {
-                      setEmail('admin@delivery.com');
-                      setPassword('admin123');
-                    }}
-                  >
-                    🛡️ Admin
-                  </button>
-                </div>
-              </div>
-
               {/* Driver Mobile App & APK Access Box */}
               <div style={{
                 marginTop: '1.25rem',
