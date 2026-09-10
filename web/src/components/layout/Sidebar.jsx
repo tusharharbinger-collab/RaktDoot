@@ -141,15 +141,6 @@ export default function Sidebar() {
             <Download size={16} className="nav-icon" style={{ color: '#ec4899' }} />
             <span>Download Mobile App</span>
           </a>
-          <a
-            href={`${API_URL}/download/driver-app`}
-            className="nav-item"
-            id="nav-download-driver-zip"
-            title="Download Driver App Source ZIP"
-          >
-            <Download size={16} className="nav-icon" style={{ color: '#3b82f6' }} />
-            <span>Download ZIP</span>
-          </a>
         </div>
 
         <div style={{ marginTop: 'var(--space-3)' }}>
