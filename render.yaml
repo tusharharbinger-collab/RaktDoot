@@ -1,34 +1,18 @@
 services:
-  # ─── BACKEND API & SOCKET SERVICE ─────────────────────────
   - type: web
     name: raktdoot-backend
-    env: node
-    plan: free
+    runtime: node
     rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
-    healthCheckPath: /health
     envVars:
-      - key: PORT
-        value: 5000
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
       - key: JWT_SECRET
-        value: raktdoot_secure_jwt_token_secret_2026
+        generateValue: true
       - key: CORS_ORIGINS
         value: "*"
-
-  # ─── FRONTEND STATIC SITE (SPA) ───────────────────────────
-  - type: static
-    name: raktdoot-web
-    plan: free
-    rootDir: web
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        value: https://raktdoot-backend.onrender.com
+      - key: UPLOAD_DIR
+        value: ./uploads

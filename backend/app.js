@@ -31,8 +31,8 @@ app.use(cors({
       return cb(null, true);
     }
 
-    // Allow wildcard, specific configured origin, or any onrender.com origin
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
+    // Allow wildcard, specific configured origin, or any onrender.com / vercel.app origin
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com') || origin.endsWith('.vercel.app')) {
       return cb(null, true);
     }
 
