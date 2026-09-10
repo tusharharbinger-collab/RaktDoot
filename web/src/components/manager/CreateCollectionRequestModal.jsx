@@ -1,8 +1,17 @@
-import { useState, useEffect } from 'react';
-import { X, Send, AlertTriangle, Hospital, Truck, MapPin, Clock } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, Send, AlertTriangle, Hospital, Truck, MapPin, Clock, Settings, Minus, Plus, Droplets, Package } from 'lucide-react';
 import api from '../../services/api';
 import { useSocket } from '../../context/SocketContext';
 import { useToast } from '../common/ToastContainer';
+import { useAuth } from '../../context/AuthContext';
+import BloodCategoryManagerModal from '../admin/BloodCategoryManagerModal';
+
+const DEFAULT_CATEGORIES = [
+  { id: 'bcat-plasma', code: 'plasma', name: 'Plasma', description: 'Fresh Frozen Plasma (FFP)' },
+  { id: 'bcat-rbc', code: 'red_blood_cell', name: 'Red Blood Cell', description: 'Packed Red Blood Cells (PRBC)' },
+  { id: 'bcat-cryo', code: 'cryo', name: 'Cryo', description: 'Cryoprecipitate Antihemophilic Factor' },
+  { id: 'bcat-platelets', code: 'platelets', name: 'Platelets', description: 'Platelet Concentrates (SDP / RDP)' },
+];
 
 export default function CreateCollectionRequestModal({
   isOpen,
@@ -12,6 +21,7 @@ export default function CreateCollectionRequestModal({
 }) {
   const { destinations, fleetDriversList, reloadDestinations } = useSocket();
   const { addToast } = useToast();
+  const { user } = useAuth();
 
   const [driverId, setDriverId] = useState('');
   const [destinationId, setDestinationId] = useState('');
@@ -19,12 +29,27 @@ export default function CreateCollectionRequestModal({
   const [sourceLat, setSourceLat] = useState(18.5039);
   const [sourceLng, setSourceLng] = useState(73.8524);
   const [urgency, setUrgency] = useState('normal'); // normal, urgent, emergency
+  const [category, setCategory] = useState('red_blood_cell');
+  const [unitCount, setUnitCount] = useState(1);
+  const [categoriesList, setCategoriesList] = useState(DEFAULT_CATEGORIES);
+  const [showCatManager, setShowCatManager] = useState(false);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Eligible destination hospitals (excluding home base)
   const hospitalList = destinations.filter(d => !d.is_home && d.id !== 'dest-home-001');
+
+  const loadCategories = useCallback(async () => {
+    try {
+      const res = await api.get('/blood-categories');
+      if (res.data?.success && res.data.data?.length > 0) {
+        setCategoriesList(res.data.data);
+      }
+    } catch (_) {
+      // Fallback to default categories
+    }
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -35,9 +60,12 @@ export default function CreateCollectionRequestModal({
       setSourceLat(18.5039);
       setSourceLng(73.8524);
       setUrgency('normal');
+      setCategory('red_blood_cell');
+      setUnitCount(1);
       setNotes('');
+      loadCategories();
     }
-  }, [isOpen, initialDestination, initialDriverId, destinations]);
+  }, [isOpen, initialDestination, initialDriverId, destinations, loadCategories]);
 
   if (!isOpen) return null;
 
@@ -63,6 +91,8 @@ export default function CreateCollectionRequestModal({
         source_lat: sourceLat,
         source_lng: sourceLng,
         urgency,
+        category: category || 'red_blood_cell',
+        unit_count: parseInt(unitCount, 10) || 1,
         notes: notes.trim() || null,
       });
 
@@ -70,10 +100,11 @@ export default function CreateCollectionRequestModal({
         await reloadDestinations();
         const dest = destinations.find(d => d.id === destinationId);
         const driver = fleetDriversList.find(d => d.id === driverId);
+        const catObj = categoriesList.find(c => c.code === category);
 
         addToast({
           type: urgency === 'emergency' ? 'urgent' : 'entry',
-          title: `🩸 Collection Request Dispatched (${urgency.toUpperCase()})`,
+          title: `🩸 ${unitCount} ${unitCount > 1 ? 'Bags' : 'Bag'} ${catObj?.name || 'Blood'} Dispatched (${urgency.toUpperCase()})`,
           message: `Assigned to ${driver?.name || 'driver'} ➔ ${dest?.name || 'destination hospital'}. Notification sent to driver app!`,
         });
 
@@ -331,14 +362,186 @@ export default function CreateCollectionRequestModal({
             </div>
           </div>
 
-          {/* 5. Additional Sample Details & Notes */}
-          <div style={{ marginBottom: 20 }}>
+          {/* 5. Blood Component Category */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
+                Blood Component Category *
+              </label>
+              {user?.role === 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => setShowCatManager(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#38bdf8',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                  }}
+                  title="Admin: Edit Blood Component Categories"
+                >
+                  <Settings size={12} />
+                  <span>Edit Categories</span>
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              {categoriesList.map((cat) => {
+                const isSelected = category === cat.code;
+                let accent = '#ef4444';
+                let iconSymbol = '🩸';
+                if (cat.code === 'plasma') { accent = '#f59e0b'; iconSymbol = '🟡'; }
+                else if (cat.code === 'cryo') { accent = '#38bdf8'; iconSymbol = '🧊'; }
+                else if (cat.code === 'platelets') { accent = '#a855f7'; iconSymbol = '⚡'; }
+
+                return (
+                  <button
+                    key={cat.code || cat.id}
+                    type="button"
+                    onClick={() => setCategory(cat.code)}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      border: isSelected ? `1.5px solid ${accent}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      background: isSelected ? `${accent}22` : 'rgba(255, 255, 255, 0.02)',
+                      color: isSelected ? '#ffffff' : '#94a3b8',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span style={{ fontSize: 16 }}>{iconSymbol}</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: isSelected ? '#ffffff' : '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {cat.name}
+                      </div>
+                      {cat.description && (
+                        <div style={{ fontSize: 10, color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {cat.description}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 6. Unit Number or Bags */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
+                Unit Number or Bags (Quantity) *
+              </label>
+              <span style={{ fontSize: 11, color: '#38bdf8', fontWeight: 600 }}>
+                {unitCount} {unitCount === 1 ? 'Bag' : 'Bags'} Selected
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {/* Stepper */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#0b1120',
+                border: '1px solid #1e293b',
+                borderRadius: 8,
+                overflow: 'hidden',
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setUnitCount(prev => Math.max(1, prev - 1))}
+                  style={{
+                    padding: '8px 12px',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: 'none',
+                    color: '#cbd5e1',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Minus size={14} />
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={unitCount}
+                  onChange={(e) => setUnitCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  style={{
+                    width: 48,
+                    padding: '6px 0',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setUnitCount(prev => Math.min(100, prev + 1))}
+                  style={{
+                    padding: '8px 12px',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: 'none',
+                    color: '#cbd5e1',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+
+              {/* Quick presets */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {[1, 2, 4, 6, 10].map(qty => (
+                  <button
+                    key={qty}
+                    type="button"
+                    onClick={() => setUnitCount(qty)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      background: unitCount === qty ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                      border: unitCount === qty ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                      color: unitCount === qty ? '#38bdf8' : '#94a3b8',
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {qty} {qty === 1 ? 'Bag' : 'Bags'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Additional Sample Details & Instructions */}
+          <div style={{ marginBottom: 18 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              Sample / Blood Unit Details & Instructions
+              Instructions & Hospital Delivery Remarks
             </label>
             <textarea
               rows={2}
-              placeholder="e.g., 4 units O+ PRBC urgent crossmatch sample, report to Dr. Kulkarni ICU"
+              placeholder="e.g., crossmatch urgent sample, deliver to Dr. Kulkarni ICU, maintain temperature control"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               style={{
@@ -383,6 +586,13 @@ export default function CreateCollectionRequestModal({
           </div>
         </form>
       </div>
+
+      {/* Admin Blood Categories Manager Modal */}
+      <BloodCategoryManagerModal
+        isOpen={showCatManager}
+        onClose={() => setShowCatManager(false)}
+        onCategoriesChanged={loadCategories}
+      />
     </div>
   );
 }

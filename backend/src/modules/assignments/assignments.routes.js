@@ -10,6 +10,7 @@ router.get('/driver/active', requireRole('driver'), controller.getActiveAssignme
 router.get('/', requireRole('manager', 'admin'), controller.getAllAssignments);
 router.get('/:id', requireRole('manager', 'admin', 'driver'), controller.getAssignmentById);
 router.post('/', requireRole('manager', 'admin'), controller.createAssignment);
+router.put('/:id', requireRole('manager', 'admin'), controller.updateAssignmentDetails);
 router.patch('/:id/status', requireRole('manager', 'admin', 'driver'), controller.updateAssignmentStatus);
 
 module.exports = router;

@@ -41,6 +41,8 @@ function initDB() {
   try { db.run('ALTER TABLE driver_assignments ADD COLUMN source_lng REAL DEFAULT 73.8524'); } catch (_) {}
   try { db.run('ALTER TABLE driver_assignments ADD COLUMN urgency TEXT DEFAULT "normal"'); } catch (_) {}
   try { db.run('ALTER TABLE driver_assignments ADD COLUMN notes TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE driver_assignments ADD COLUMN category TEXT DEFAULT "red_blood_cell"'); } catch (_) {}
+  try { db.run('ALTER TABLE driver_assignments ADD COLUMN unit_count INTEGER DEFAULT 1'); } catch (_) {}
   try { db.run('ALTER TABLE users ADD COLUMN push_token TEXT'); } catch (_) {}
   try { db.run('ALTER TABLE users ADD COLUMN vehicle_type TEXT DEFAULT "two_wheeler"'); } catch (_) {}
   try { db.run('ALTER TABLE users ADD COLUMN vehicle_number TEXT'); } catch (_) {}
@@ -58,6 +60,8 @@ function initDB() {
         destination_name    TEXT NOT NULL,
         destination_address TEXT,
         urgency             TEXT DEFAULT 'normal',
+        category            TEXT DEFAULT 'red_blood_cell',
+        unit_count          INTEGER DEFAULT 1,
         notes               TEXT,
         assigned_at         TEXT,
         accepted_at         TEXT,
@@ -73,6 +77,48 @@ function initDB() {
     db.run('CREATE INDEX IF NOT EXISTS idx_work_logs_completed_at ON work_logs(completed_at DESC)');
   } catch (err) {
     console.warn('[DB] work_logs table init warning:', err.message);
+  }
+  try { db.run('ALTER TABLE work_logs ADD COLUMN category TEXT DEFAULT "red_blood_cell"'); } catch (_) {}
+  try { db.run('ALTER TABLE work_logs ADD COLUMN unit_count INTEGER DEFAULT 1'); } catch (_) {}
+
+  // Blood Categories Table (Manageable & Editable by Admin)
+  try {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS blood_categories (
+        id            TEXT PRIMARY KEY,
+        code          TEXT UNIQUE NOT NULL,
+        name          TEXT NOT NULL,
+        description   TEXT,
+        is_active     INTEGER NOT NULL DEFAULT 1,
+        display_order INTEGER NOT NULL DEFAULT 0,
+        created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+
+    // Seed default categories if empty
+    const catCheck = db.prepare('SELECT COUNT(*) as count FROM blood_categories');
+    const catCount = catCheck.get()?.count || 0;
+    catCheck.finalize();
+
+    if (catCount === 0) {
+      const defaultCategories = [
+        { id: 'bcat-plasma', code: 'plasma', name: 'Plasma', description: 'Fresh Frozen Plasma (FFP)', order: 1 },
+        { id: 'bcat-rbc', code: 'red_blood_cell', name: 'Red Blood Cell', description: 'Packed Red Blood Cells (PRBC)', order: 2 },
+        { id: 'bcat-cryo', code: 'cryo', name: 'Cryo', description: 'Cryoprecipitate Antihemophilic Factor', order: 3 },
+        { id: 'bcat-platelets', code: 'platelets', name: 'Platelets', description: 'Single Donor Platelets / Random Donor (SDP / RDP)', order: 4 },
+      ];
+
+      for (const cat of defaultCategories) {
+        db.run(
+          'INSERT OR IGNORE INTO blood_categories (id, code, name, description, display_order, is_active) VALUES (?, ?, ?, ?, ?, 1)',
+          [cat.id, cat.code, cat.name, cat.description, cat.order]
+        );
+      }
+      console.log('🩸 Default blood categories seeded (Plasma, Red Blood Cell, Cryo, Platelets)');
+    }
+  } catch (err) {
+    console.warn('[DB] blood_categories table init warning:', err.message);
   }
 
   // Ensure permanent Home Location (Jankalyan Blood Centre HQ, Swargate, Pune) is configured

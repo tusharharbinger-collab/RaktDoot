@@ -10,7 +10,7 @@ function getAllWorkLogs({ driver_id, destination_id, urgency, search, limit = 10
     SELECT
       wl.id, wl.assignment_id, wl.driver_id, wl.destination_id,
       wl.source_name, wl.destination_name, wl.destination_address,
-      wl.urgency, wl.notes, wl.assigned_at, wl.accepted_at, wl.completed_at,
+      wl.urgency, wl.category, wl.unit_count, wl.notes, wl.assigned_at, wl.accepted_at, wl.completed_at,
       wl.duration_mins, wl.distance_km, wl.created_at,
       u.name AS driver_name, u.email AS driver_email, u.phone AS driver_phone,
       u.avatar_color AS driver_avatar
@@ -71,6 +71,8 @@ function createWorkLog({
   destination_name,
   destination_address = null,
   urgency = 'normal',
+  category = 'red_blood_cell',
+  unit_count = 1,
   notes = null,
   assigned_at = null,
   accepted_at = null,
@@ -85,9 +87,9 @@ function createWorkLog({
     INSERT INTO work_logs (
       id, assignment_id, driver_id, destination_id,
       source_name, destination_name, destination_address,
-      urgency, notes, assigned_at, accepted_at, completed_at,
+      urgency, category, unit_count, notes, assigned_at, accepted_at, completed_at,
       duration_mins, distance_km, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `, [
     id,
     assignment_id,
@@ -97,6 +99,8 @@ function createWorkLog({
     destination_name,
     destination_address,
     urgency,
+    category || 'red_blood_cell',
+    parseInt(unit_count, 10) || 1,
     notes,
     assigned_at,
     accepted_at,

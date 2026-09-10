@@ -1,27 +1,68 @@
-import { Users } from 'lucide-react';
+import { useState } from 'react';
+import { Users, Droplets } from 'lucide-react';
 import UserManagementTable from '../components/admin/UserManagementTable';
+import BloodCategoriesManagement from '../components/admin/BloodCategoriesManagement';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageToggle from '../components/common/LanguageToggle';
 
 export default function AdminUsersPage() {
   const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'categories'
 
   return (
     <div className="page-content-full">
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Users size={16} style={{ color: 'var(--color-primary)' }} />
+          {activeTab === 'users' ? (
+            <Users size={16} style={{ color: 'var(--color-primary)' }} />
+          ) : (
+            <Droplets size={16} style={{ color: '#ef4444' }} />
+          )}
           <div>
-            <div className="topbar-title">{t.userMgmtTitle}</div>
-            <div className="topbar-subtitle">{t.userMgmtSubtitle}</div>
+            <div className="topbar-title">
+              {activeTab === 'users' ? t.userMgmtTitle : 'Blood Categories & Unit Specifications'}
+            </div>
+            <div className="topbar-subtitle">
+              {activeTab === 'users'
+                ? t.userMgmtSubtitle
+                : 'Admin configuration for Plasma, Red Blood Cells, Cryo, Platelets & Custom Blood Components'}
+            </div>
           </div>
         </div>
+
+        {/* Tab Switcher */}
+        <div style={{ display: 'flex', gap: 8, marginLeft: 24 }}>
+          <button
+            id="tab-admin-users"
+            className={`btn btn-sm ${activeTab === 'users' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('users')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <Users size={14} />
+            <span>Users & Roles</span>
+          </button>
+          <button
+            id="tab-admin-categories"
+            className={`btn btn-sm ${activeTab === 'categories' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('categories')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <Droplets size={14} />
+            <span>Blood Categories</span>
+          </button>
+        </div>
+
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           <LanguageToggle />
         </div>
       </div>
+
       <div className="page-content">
-        <UserManagementTable />
+        {activeTab === 'users' ? (
+          <UserManagementTable />
+        ) : (
+          <BloodCategoriesManagement />
+        )}
       </div>
     </div>
   );

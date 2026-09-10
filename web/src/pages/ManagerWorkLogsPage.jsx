@@ -92,7 +92,7 @@ export default function ManagerWorkLogsPage() {
   // Export CSV
   const exportToCSV = () => {
     if (!filteredLogs.length) return;
-    const headers = ['Log ID', 'Driver Name', 'Driver Phone', 'Destination', 'Address', 'Urgency', 'Duration (Mins)', 'Completed At', 'Notes'];
+    const headers = ['Log ID', 'Driver Name', 'Driver Phone', 'Destination', 'Address', 'Urgency', 'Blood Category', 'Units (Bags)', 'Duration (Mins)', 'Completed At', 'Notes'];
     const rows = filteredLogs.map(l => [
       l.id,
       `"${(l.driver_name || '').replace(/"/g, '""')}"`,
@@ -100,6 +100,8 @@ export default function ManagerWorkLogsPage() {
       `"${(l.destination_name || '').replace(/"/g, '""')}"`,
       `"${(l.destination_address || '').replace(/"/g, '""')}"`,
       l.urgency,
+      `"${(l.category || 'red_blood_cell').toUpperCase()}"`,
+      l.unit_count || 1,
       l.duration_mins || 0,
       l.completed_at || '',
       `"${(l.notes || '').replace(/"/g, '""')}"`,
@@ -558,6 +560,33 @@ export default function ManagerWorkLogsPage() {
                           </div>
                           <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {log.destination_address || 'Pune Hub'}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: 4,
+                              background: log.category === 'plasma' ? 'rgba(245, 158, 11, 0.15)'
+                                : log.category === 'cryo' ? 'rgba(56, 189, 248, 0.15)'
+                                : log.category === 'platelets' ? 'rgba(168, 85, 247, 0.15)'
+                                : 'rgba(239, 68, 68, 0.15)',
+                              border: log.category === 'plasma' ? '1px solid rgba(245, 158, 11, 0.3)'
+                                : log.category === 'cryo' ? '1px solid rgba(56, 189, 248, 0.3)'
+                                : log.category === 'platelets' ? '1px solid rgba(168, 85, 247, 0.3)'
+                                : '1px solid rgba(239, 68, 68, 0.3)',
+                              color: log.category === 'plasma' ? '#fbbf24'
+                                : log.category === 'cryo' ? '#38bdf8'
+                                : log.category === 'platelets' ? '#c084fc'
+                                : '#fca5a5',
+                              fontSize: 11,
+                              fontWeight: 700,
+                            }}>
+                              🩸 {log.unit_count || 1} {(log.unit_count || 1) > 1 ? 'Bags' : 'Bag'} · {
+                                log.category === 'plasma' ? 'Plasma'
+                                : log.category === 'cryo' ? 'Cryo'
+                                : log.category === 'platelets' ? 'Platelets'
+                                : 'Red Blood Cell'
+                              }
+                            </span>
                           </div>
                           {log.notes && (
                             <div style={{ fontSize: 11, color: '#cbd5e1', marginTop: 4, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>

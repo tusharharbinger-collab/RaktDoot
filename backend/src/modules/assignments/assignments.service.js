@@ -9,7 +9,7 @@ function getAssignmentById(id) {
   const assignment = dbGet(`
     SELECT
       da.id, da.destination_id, da.driver_id, da.assigned_by, da.status,
-      da.source_name, da.source_lat, da.source_lng, da.urgency, da.notes,
+      da.source_name, da.source_lat, da.source_lng, da.urgency, da.category, da.unit_count, da.notes,
       da.assigned_at, da.accepted_at, da.completed_at, da.updated_at,
       d.name AS destination_name, d.address AS destination_address,
       d.lat AS destination_lat, d.lng AS destination_lng, d.radius_m AS destination_radius_m,
@@ -41,7 +41,7 @@ function getAllAssignments({ status, driver_id, destination_id, limit = 50 } = {
   let sql = `
     SELECT
       da.id, da.destination_id, da.driver_id, da.assigned_by, da.status,
-      da.source_name, da.source_lat, da.source_lng, da.urgency, da.notes,
+      da.source_name, da.source_lat, da.source_lng, da.urgency, da.category, da.unit_count, da.notes,
       da.assigned_at, da.accepted_at, da.completed_at, da.updated_at,
       d.name AS destination_name, d.address AS destination_address,
       d.lat AS destination_lat, d.lng AS destination_lng, d.radius_m AS destination_radius_m,
@@ -82,7 +82,7 @@ function getActiveAssignmentForDriver(driverId) {
   const assignment = dbGet(`
     SELECT
       da.id, da.destination_id, da.driver_id, da.assigned_by, da.status,
-      da.source_name, da.source_lat, da.source_lng, da.urgency, da.notes,
+      da.source_name, da.source_lat, da.source_lng, da.urgency, da.category, da.unit_count, da.notes,
       da.assigned_at, da.accepted_at, da.completed_at, da.updated_at,
       d.name AS destination_name, d.address AS destination_address,
       d.lat AS destination_lat, d.lng AS destination_lng, d.radius_m AS destination_radius_m,
@@ -110,6 +110,8 @@ function createAssignment({
   source_lat = 18.5039,
   source_lng = 73.8524,
   urgency = 'normal',
+  category = 'red_blood_cell',
+  unit_count = 1,
   notes = null,
 }) {
   if (!destination_id || !driver_id) {
@@ -150,9 +152,9 @@ function createAssignment({
   dbRun(`
     INSERT INTO driver_assignments (
       id, destination_id, driver_id, assigned_by, status,
-      source_name, source_lat, source_lng, urgency, notes
+      source_name, source_lat, source_lng, urgency, category, unit_count, notes
     )
-    VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?)
   `, [
     id,
     destination_id,
@@ -162,8 +164,36 @@ function createAssignment({
     parseFloat(source_lat) || 18.5039,
     parseFloat(source_lng) || 73.8524,
     urgency || 'normal',
+    category || 'red_blood_cell',
+    parseInt(unit_count, 10) || 1,
     notes || null,
   ]);
+
+  return getAssignmentById(id);
+}
+
+/**
+ * Edit / update assignment details by Admin or Manager
+ */
+function updateAssignmentDetails(id, { urgency, category, unit_count, notes, driver_id }) {
+  const existing = getAssignmentById(id);
+  if (!existing) {
+    const err = new Error('Assignment not found');
+    err.status = 404;
+    throw err;
+  }
+
+  const newUrgency = urgency || existing.urgency || 'normal';
+  const newCategory = category || existing.category || 'red_blood_cell';
+  const newUnits = unit_count !== undefined ? (parseInt(unit_count, 10) || 1) : (existing.unit_count || 1);
+  const newNotes = notes !== undefined ? notes : existing.notes;
+  const newDriverId = driver_id || existing.driver_id;
+
+  dbRun(`
+    UPDATE driver_assignments
+    SET urgency = ?, category = ?, unit_count = ?, notes = ?, driver_id = ?, updated_at = datetime('now')
+    WHERE id = ?
+  `, [newUrgency, newCategory, newUnits, newNotes, newDriverId, id]);
 
   return getAssignmentById(id);
 }
@@ -220,5 +250,6 @@ module.exports = {
   getAllAssignments,
   getActiveAssignmentForDriver,
   createAssignment,
+  updateAssignmentDetails,
   updateAssignmentStatus,
 };

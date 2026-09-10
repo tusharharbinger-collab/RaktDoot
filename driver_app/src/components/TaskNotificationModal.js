@@ -158,6 +158,28 @@ export default function TaskNotificationModal({
               </View>
             </View>
 
+            {/* Blood Unit & Category Badge */}
+            <View style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              borderWidth: 1,
+              borderColor: 'rgba(239, 68, 68, 0.35)',
+              borderRadius: 10,
+              padding: 12,
+              marginBottom: 12,
+            }}>
+              <Text style={{ fontSize: 10, fontWeight: '800', color: '#f87171', letterSpacing: 0.5 }}>
+                BLOOD COMPONENT & QUANTITY
+              </Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: '#ffffff', marginTop: 3 }}>
+                🩸 {assignment.unit_count || 1} {(assignment.unit_count || 1) > 1 ? 'Bags' : 'Bag'} · {
+                  assignment.category === 'plasma' ? 'Plasma (FFP)'
+                  : assignment.category === 'cryo' ? 'Cryo (CRYO)'
+                  : assignment.category === 'platelets' ? 'Platelets (SDP/RDP)'
+                  : 'Red Blood Cells (PRBC)'
+                }
+              </Text>
+            </View>
+
             {/* Sample Notes / Dispatch Instructions */}
             {(assignment.notes || dest.description) ? (
               <View style={styles.infoRow}>

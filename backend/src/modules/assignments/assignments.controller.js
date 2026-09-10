@@ -48,6 +48,8 @@ function createAssignment(req, res, next) {
       source_lat,
       source_lng,
       urgency,
+      category,
+      unit_count,
       notes,
     } = req.body;
 
@@ -59,6 +61,8 @@ function createAssignment(req, res, next) {
       source_lat,
       source_lng,
       urgency,
+      category: category || 'red_blood_cell',
+      unit_count: parseInt(unit_count, 10) || 1,
       notes,
     });
 
@@ -165,6 +169,8 @@ function updateAssignmentStatus(req, res, next) {
           destination_name: assignment.destination_name,
           destination_address: assignment.destination_address,
           urgency: assignment.urgency,
+          category: assignment.category,
+          unit_count: assignment.unit_count,
           notes: assignment.notes,
           assigned_at: assignment.assigned_at,
           accepted_at: assignment.accepted_at,
@@ -206,10 +212,36 @@ function updateAssignmentStatus(req, res, next) {
   }
 }
 
+function updateAssignmentDetails(req, res, next) {
+  try {
+    const { urgency, category, unit_count, notes, driver_id } = req.body;
+    const assignment = assignmentsService.updateAssignmentDetails(req.params.id, {
+      urgency,
+      category,
+      unit_count,
+      notes,
+      driver_id,
+    });
+
+    try {
+      const io = getIO();
+      io.to('fleet-monitors').emit('assignment_updated', { assignment });
+      io.to(`driver-${assignment.driver_id}`).emit('assignment_updated', { assignment });
+    } catch (socketErr) {
+      console.warn('[Assignments] Socket emit error on update:', socketErr.message);
+    }
+
+    res.json({ success: true, data: assignment, message: 'Assignment details updated successfully.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getAllAssignments,
   getActiveAssignment,
   getAssignmentById,
   createAssignment,
+  updateAssignmentDetails,
   updateAssignmentStatus,
 };
