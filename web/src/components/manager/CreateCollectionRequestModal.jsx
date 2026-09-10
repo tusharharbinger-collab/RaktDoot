@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Send, AlertTriangle, Hospital, Truck, MapPin, Clock, Settings, Minus, Plus, Droplets, Package } from 'lucide-react';
+import { X, Send, AlertTriangle, Hospital, Truck, MapPin, Clock, Settings, Minus, Plus, Droplets, Droplet, Layers, Snowflake, Zap, Package } from 'lucide-react';
 import api from '../../services/api';
 import { useSocket } from '../../context/SocketContext';
 import { useToast } from '../common/ToastContainer';
@@ -104,7 +104,7 @@ export default function CreateCollectionRequestModal({
 
         addToast({
           type: urgency === 'emergency' ? 'urgent' : 'entry',
-          title: `🩸 ${unitCount} ${unitCount > 1 ? 'Bags' : 'Bag'} ${catObj?.name || 'Blood'} Dispatched (${urgency.toUpperCase()})`,
+          title: `${unitCount} ${unitCount > 1 ? 'Bags' : 'Bag'} ${catObj?.name || 'Blood'} Dispatched (${urgency.toUpperCase()})`,
           message: `Assigned to ${driver?.name || 'driver'} ➔ ${dest?.name || 'destination hospital'}. Notification sent to driver app!`,
         });
 
@@ -446,12 +446,29 @@ export default function CreateCollectionRequestModal({
               {categoriesList.map((cat) => {
                 const isSelected = category === cat.code;
                 let accent = '#ef4444';
-                let iconSymbol = '🩸';
                 let shortBadge = 'PRBC';
-                if (cat.code === 'plasma') { accent = '#f59e0b'; iconSymbol = '🟡'; shortBadge = 'FFP'; }
-                else if (cat.code === 'cryo') { accent = '#38bdf8'; iconSymbol = '🧊'; shortBadge = 'CRYO'; }
-                else if (cat.code === 'platelets') { accent = '#a855f7'; iconSymbol = '⚡'; shortBadge = 'SDP'; }
-                else { shortBadge = cat.code.toUpperCase().slice(0, 4); }
+                let CatIcon = Droplet;
+
+                if (cat.code === 'plasma') {
+                  accent = '#f59e0b';
+                  shortBadge = 'FFP';
+                  CatIcon = Layers;
+                } else if (cat.code === 'cryo') {
+                  accent = '#38bdf8';
+                  shortBadge = 'CRYO';
+                  CatIcon = Snowflake;
+                } else if (cat.code === 'platelets') {
+                  accent = '#a855f7';
+                  shortBadge = 'SDP';
+                  CatIcon = Zap;
+                } else if (cat.code === 'red_blood_cell' || cat.code === 'rbc') {
+                  accent = '#ef4444';
+                  shortBadge = 'PRBC';
+                  CatIcon = Droplet;
+                } else {
+                  shortBadge = cat.code.replace(/_/g, '').toUpperCase().slice(0, 4);
+                  CatIcon = Package;
+                }
 
                 return (
                   <button
@@ -472,7 +489,19 @@ export default function CreateCollectionRequestModal({
                       boxShadow: isSelected ? `0 0 12px ${accent}25` : 'none',
                     }}
                   >
-                    <span style={{ fontSize: 16 }}>{iconSymbol}</span>
+                    <div style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: isSelected ? `${accent}33` : 'rgba(255, 255, 255, 0.05)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: accent,
+                      flexShrink: 0,
+                    }}>
+                      <CatIcon size={15} />
+                    </div>
                     <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: isSelected ? '#ffffff' : '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {cat.name}
@@ -633,7 +662,8 @@ export default function CreateCollectionRequestModal({
                 color: '#fca5a5',
                 fontWeight: 600,
               }}>
-                🩸 {unitCount} {unitCount === 1 ? 'Bag' : 'Bags'} · {categoriesList.find(c => c.code === category)?.name || 'Blood'}
+                <Droplet size={12} style={{ color: '#ef4444' }} />
+                <span>{unitCount} {unitCount === 1 ? 'Bag' : 'Bags'} · {categoriesList.find(c => c.code === category)?.name || 'Blood'}</span>
               </span>
               <span style={{ color: '#475569' }}>➔</span>
               <span style={{ color: '#cbd5e1', fontWeight: 600 }}>

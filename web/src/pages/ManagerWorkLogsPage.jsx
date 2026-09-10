@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ClipboardList, CheckCircle2, Clock, AlertTriangle, Shield,
   Search, Filter, Download, RefreshCw, Calendar, ArrowRight,
-  Truck, User, MapPin, Building2, Flame, ChevronRight, X, ExternalLink
+  Truck, User, MapPin, Building2, Flame, ChevronRight, X, ExternalLink, Droplet, MessageSquare
 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -579,18 +579,28 @@ export default function ManagerWorkLogsPage() {
                                 : '#fca5a5',
                               fontSize: 11,
                               fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
                             }}>
-                              🩸 {log.unit_count || 1} {(log.unit_count || 1) > 1 ? 'Bags' : 'Bag'} · {
+                              <Droplet size={11} style={{
+                                color: log.category === 'plasma' ? '#fbbf24'
+                                  : log.category === 'cryo' ? '#38bdf8'
+                                  : log.category === 'platelets' ? '#c084fc'
+                                  : '#f87171',
+                              }} />
+                              <span>{log.unit_count || 1} {(log.unit_count || 1) > 1 ? 'Bags' : 'Bag'} · {
                                 log.category === 'plasma' ? 'Plasma'
                                 : log.category === 'cryo' ? 'Cryo'
                                 : log.category === 'platelets' ? 'Platelets'
                                 : 'Red Blood Cell'
-                              }
+                              }</span>
                             </span>
                           </div>
                           {log.notes && (
                             <div style={{ fontSize: 11, color: '#cbd5e1', marginTop: 4, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <span>💬 {log.notes.slice(0, 65)}{log.notes.length > 65 ? '...' : ''}</span>
+                              <MessageSquare size={11} style={{ color: '#94a3b8' }} />
+                              <span>{log.notes.slice(0, 65)}{log.notes.length > 65 ? '...' : ''}</span>
                             </div>
                           )}
                         </td>

@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { useSocket } from '../../context/SocketContext';
 import { getDisplayAddress } from '../../utils/geoAddress';
 import { useLanguage } from '../../context/LanguageContext';
-import { Maximize2, X, Shield } from 'lucide-react';
+import { Maximize2, X, Shield, Droplet } from 'lucide-react';
 
 // Fix default leaflet icon paths
 delete L.Icon.Default.prototype._getIconUrl;
@@ -935,7 +935,8 @@ export default function FleetMap({
                       boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)',
                     }}
                   >
-                    <span>🩸</span> Create Collection Request
+                    <Droplet size={13} style={{ color: '#ffffff' }} />
+                    <span>Create Collection Request</span>
                   </button>
                 </div>
               </Popup>
