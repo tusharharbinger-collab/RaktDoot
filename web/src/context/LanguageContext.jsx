@@ -37,7 +37,8 @@ const translations = {
     customRange: 'Custom Range',
     administration: 'Administration',
     userManagement: 'User Management',
-    telemetry: 'Telemetry',
+    telemetry: 'System Health',
+    systemHealth: 'System Health',
     system: 'System',
     settings: 'Settings',
     signOut: 'Sign out',
@@ -113,8 +114,8 @@ const translations = {
     actions: 'Actions',
 
     // Admin Telemetry Page
-    telemetryTitle: 'System Telemetry',
-    telemetrySubtitle: 'Live server health & vehicle telemetry statistics',
+    telemetryTitle: 'System Health',
+    telemetrySubtitle: 'Live server health & infrastructure telemetry statistics',
     transportOpsSection: 'Transport & Dispatch Operations',
     socketClients: 'Socket Clients',
     activeVehicles: 'Active Vehicles',
@@ -186,7 +187,8 @@ const translations = {
     customRange: 'सानुकूल तारीख',
     administration: 'प्रशासन (Administration)',
     userManagement: 'वापरकर्ता व्यवस्थापन (Users)',
-    telemetry: 'सिस्टम टेलीमेट्री (Telemetry)',
+    telemetry: 'सिस्टम आरोग्य (System Health)',
+    systemHealth: 'सिस्टम आरोग्य (System Health)',
     system: 'प्रणाली (System)',
     settings: 'सेटिंग्ज (Settings)',
     signOut: 'बाहेर पडा (Sign Out)',
@@ -262,8 +264,8 @@ const translations = {
     actions: 'क्रिया',
 
     // Admin Telemetry Page
-    telemetryTitle: 'प्रणाली टेलीमेट्री व आकडेवारी',
-    telemetrySubtitle: 'लाईव्ह सर्व्हर आरोग्य व वाहन टेलिमेट्री आकडेवारी',
+    telemetryTitle: 'सिस्टम आरोग्य व कार्यक्षमता (System Health)',
+    telemetrySubtitle: 'लाईव्ह सर्व्हर आरोग्य व सिस्टीम टेलिमेट्री आकडेवारी',
     transportOpsSection: 'वहन व प्रेषण ऑपरेशन्स',
     socketClients: 'सॉकेट कनेक्शन्स',
     activeVehicles: 'सक्रिय वाहने',

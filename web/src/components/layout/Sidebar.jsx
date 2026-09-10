@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  Map, Users, AlertTriangle, BarChart3,
+  Map, Users, AlertTriangle, BarChart3, Activity,
   Settings, LogOut, Wifi, WifiOff, Shield, Truck,
   MapPin, Bell, Smartphone, Download, ClipboardList, FileText
 } from 'lucide-react';
@@ -44,7 +44,7 @@ export default function Sidebar() {
 
   const adminNav = [
     { to: '/admin/users', icon: Users, label: t.userManagement },
-    { to: '/admin/telemetry', icon: BarChart3, label: t.telemetry },
+    { to: '/admin/telemetry', icon: Activity, label: t.systemHealth || t.telemetry || 'System Health' },
   ];
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
   const isAdmin = user?.role === 'admin';
@@ -139,7 +139,7 @@ export default function Sidebar() {
             title="Download Driver Android APK directly"
           >
             <Download size={16} className="nav-icon" style={{ color: '#ec4899' }} />
-            <span>Download APK</span>
+            <span>Download Mobile App</span>
           </a>
           <a
             href={`${API_URL}/download/driver-app`}
