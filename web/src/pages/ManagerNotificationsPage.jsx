@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell, CheckCheck, MapPin, Radio, Shield, Clock,
-  ExternalLink, Check, Navigation, AlertCircle
+  ExternalLink, Check, Navigation, AlertCircle, Trash2
 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,6 +15,8 @@ export default function ManagerNotificationsPage() {
     unreadNotificationsCount,
     markNotificationRead,
     markAllNotificationsRead,
+    deleteNotification,
+    clearAllNotifications,
   } = useSocket();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -118,9 +120,37 @@ export default function ManagerNotificationsPage() {
             </button>
           </div>
 
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            Total notifications: <strong>{notifications.length}</strong>
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Total notifications: <strong>{notifications.length}</strong>
+            </span>
+            {notifications.length > 0 && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to clear all notifications?')) {
+                    clearAllNotifications();
+                  }
+                }}
+                className="btn btn-ghost btn-sm"
+                style={{
+                  fontSize: 11.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  color: '#f87171',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                }}
+                title="Clear all alerts"
+              >
+                <Trash2 size={13} />
+                <span>Clear All</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Notifications List */}
@@ -250,6 +280,21 @@ export default function ManagerNotificationsPage() {
                         <Check size={14} style={{ color: '#10b981' }} />
                       </button>
                     )}
+
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Delete this notification?')) {
+                          deleteNotification(notif.id);
+                        }
+                      }}
+                      className="btn btn-ghost btn-icon btn-sm"
+                      style={{ color: '#94a3b8', padding: '6px' }}
+                      title="Delete notification"
+                      onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               );

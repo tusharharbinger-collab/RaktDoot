@@ -96,4 +96,42 @@ function updateIssueStatus(req, res, next) {
   }
 }
 
-module.exports = { getAllIssues, getIssueById, createIssue, updateIssueStatus };
+function deleteIssue(req, res, next) {
+  try {
+    const result = issuesService.deleteIssue(req.params.id);
+
+    try {
+      const io = getIO();
+      io.to('fleet-monitors').emit('issue_deleted', { id: req.params.id });
+    } catch (_) { /* ok */ }
+
+    res.json({ success: true, id: req.params.id });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function clearIssues(req, res, next) {
+  try {
+    const { status } = req.query;
+    issuesService.clearIssues({ status });
+
+    try {
+      const io = getIO();
+      io.to('fleet-monitors').emit('issues_cleared', { status });
+    } catch (_) { /* ok */ }
+
+    res.json({ success: true, status: status || 'all' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getAllIssues,
+  getIssueById,
+  createIssue,
+  updateIssueStatus,
+  deleteIssue,
+  clearIssues,
+};

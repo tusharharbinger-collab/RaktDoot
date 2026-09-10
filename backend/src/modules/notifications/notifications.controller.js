@@ -48,9 +48,30 @@ function getUnreadCount(req, res, next) {
   }
 }
 
+function deleteNotification(req, res, next) {
+  try {
+    notificationsService.deleteNotification(req.params.id, req.user.id);
+    const unreadCount = notificationsService.getUnreadCount(req.user.id);
+    res.json({ success: true, id: req.params.id, unreadCount });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function clearAllNotifications(req, res, next) {
+  try {
+    notificationsService.clearAllNotifications(req.user.id);
+    res.json({ success: true, unreadCount: 0 });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getNotifications,
   markRead,
   markAllRead,
   getUnreadCount,
+  deleteNotification,
+  clearAllNotifications,
 };

@@ -88,4 +88,32 @@ function updateIssueStatus(issueId, status, resolvedBy) {
   return getIssueById(issueId);
 }
 
-module.exports = { getAllIssues, getIssueById, createIssue, updateIssueStatus };
+function deleteIssue(issueId) {
+  const issue = dbGet('SELECT id, image_path FROM issues WHERE id = ?', [issueId]);
+  if (!issue) {
+    const err = new Error('Issue not found.');
+    err.status = 404;
+    throw err;
+  }
+
+  dbRun('DELETE FROM issues WHERE id = ?', [issueId]);
+  return { success: true, id: issueId };
+}
+
+function clearIssues({ status } = {}) {
+  if (status) {
+    dbRun('DELETE FROM issues WHERE status = ?', [status]);
+  } else {
+    dbRun('DELETE FROM issues');
+  }
+  return { success: true };
+}
+
+module.exports = {
+  getAllIssues,
+  getIssueById,
+  createIssue,
+  updateIssueStatus,
+  deleteIssue,
+  clearIssues,
+};

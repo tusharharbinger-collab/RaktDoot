@@ -105,6 +105,30 @@ function getUnreadCount(manager_id) {
   return row ? row.count : 0;
 }
 
+/**
+ * Delete a single notification.
+ */
+function deleteNotification(id, manager_id) {
+  dbRun(`
+    DELETE FROM geofence_notifications
+    WHERE id = ? AND (manager_id = ? OR manager_id = 'all')
+  `, [id, manager_id]);
+
+  return { success: true, id };
+}
+
+/**
+ * Clear all notifications for a manager.
+ */
+function clearAllNotifications(manager_id) {
+  dbRun(`
+    DELETE FROM geofence_notifications
+    WHERE (manager_id = ? OR manager_id = 'all')
+  `, [manager_id]);
+
+  return { success: true };
+}
+
 module.exports = {
   createGeofenceNotification,
   getNotificationById,
@@ -112,4 +136,6 @@ module.exports = {
   markRead,
   markAllRead,
   getUnreadCount,
+  deleteNotification,
+  clearAllNotifications,
 };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   AlertTriangle, CheckCircle, Clock, X, Image as ImageIcon,
-  ExternalLink, MapPin, Phone, Navigation, Camera, ShieldAlert, Check
+  ExternalLink, MapPin, Phone, Navigation, Camera, ShieldAlert, Check, Trash2
 } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 import api, { API_URL } from '../../services/api';
@@ -23,7 +23,7 @@ const SEVERITY_MAP = {
   low: { label: 'LOW', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6' },
 };
 
-function IssueDetailModal({ issue, onClose, onResolve }) {
+function IssueDetailModal({ issue, onClose, onResolve, onDelete }) {
   if (!issue) return null;
 
   const category = ISSUE_CATEGORY_MAP[issue.type] || {
@@ -178,6 +178,29 @@ function IssueDetailModal({ issue, onClose, onResolve }) {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
+            {onDelete && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  if (window.confirm(`Delete incident report #${issue.id}?`)) {
+                    onDelete(issue.id);
+                    onClose();
+                  }
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: '#f87171',
+                  marginRight: 'auto',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  padding: '6px 12px',
+                }}
+              >
+                <Trash2 size={13} /> Delete Incident
+              </button>
+            )}
             {issue.driver_phone && (
               <a
                 href={`tel:${issue.driver_phone}`}
@@ -214,7 +237,7 @@ function IssueDetailModal({ issue, onClose, onResolve }) {
   );
 }
 
-function IssueCard({ issue, onResolve, onInspect }) {
+function IssueCard({ issue, onResolve, onInspect, onDelete }) {
   const [resolving, setResolving] = useState(false);
 
   const handleResolve = async () => {
@@ -334,7 +357,33 @@ function IssueCard({ issue, onResolve, onInspect }) {
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border-subtle)', justifyContent: 'flex-end', alignItems: 'center' }}>
+        {onDelete && (
+          <button
+            id={`btn-delete-${issue.id}`}
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              if (window.confirm(`Are you sure you want to delete incident report #${issue.id}?`)) {
+                onDelete(issue.id);
+              }
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              color: '#94a3b8',
+              padding: '4px 8px',
+              fontSize: 11.5,
+              cursor: 'pointer',
+            }}
+            title="Delete incident"
+            onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+            onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+          >
+            <Trash2 size={12} />
+            Delete
+          </button>
+        )}
         <button
           id={`btn-inspect-${issue.id}`}
           className="btn btn-secondary btn-sm"
@@ -362,7 +411,7 @@ function IssueCard({ issue, onResolve, onInspect }) {
 }
 
 export default function IssueFeed() {
-  const { issues, setIssues } = useSocket();
+  const { issues, setIssues, deleteIssue, clearIssues } = useSocket();
   const [inspecting, setInspecting] = useState(null);
   const [filter, setFilter] = useState('all');
 
@@ -386,12 +435,43 @@ export default function IssueFeed() {
           <div style={{ fontSize: 16, fontWeight: 700 }}>Incident & Breakdown Feed</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{openCount} open alert{openCount !== 1 ? 's' : ''}</div>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)', marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', marginLeft: 'auto', alignItems: 'center' }}>
           {['all', 'open', 'resolved'].map(f => (
             <button key={f} id={`issue-filter-${f}`} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter(f)}>
               {f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           ))}
+          {issues.length > 0 && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                const msg = filter === 'resolved'
+                  ? 'Clear all resolved issues from the feed?'
+                  : filter === 'open'
+                  ? 'Clear all open issues from the feed?'
+                  : 'Clear all issues from the incident feed?';
+                if (window.confirm(msg)) {
+                  clearIssues(filter);
+                }
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                color: '#f87171',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'rgba(239, 68, 68, 0.08)',
+                fontSize: 11.5,
+                padding: '4px 10px',
+                marginLeft: 4,
+                cursor: 'pointer',
+              }}
+              title="Clear incidents"
+            >
+              <Trash2 size={12} />
+              <span>{filter === 'resolved' ? 'Clear Resolved' : 'Clear All'}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -405,7 +485,13 @@ export default function IssueFeed() {
           </div>
         ) : (
           filtered.map(issue => (
-            <IssueCard key={issue.id} issue={issue} onResolve={handleResolve} onInspect={setInspecting} />
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              onResolve={handleResolve}
+              onInspect={setInspecting}
+              onDelete={deleteIssue}
+            />
           ))
         )}
       </div>
@@ -415,6 +501,7 @@ export default function IssueFeed() {
           issue={inspecting}
           onClose={() => setInspecting(null)}
           onResolve={handleResolve}
+          onDelete={deleteIssue}
         />
       )}
     </div>

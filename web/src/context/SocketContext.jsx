@@ -62,6 +62,59 @@ export function SocketProvider({ children }) {
     }
   }, []);
 
+  const deleteNotification = useCallback(async (id) => {
+    try {
+      const res = await api.delete(`/notifications/${id}`);
+      if (res.data?.success) {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        if (res.data.unreadCount !== undefined) {
+          setUnreadNotificationsCount(res.data.unreadCount);
+        } else {
+          setUnreadNotificationsCount(prev => Math.max(0, prev - 1));
+        }
+      }
+    } catch (err) {
+      console.error('[Notifications] Delete error:', err.message);
+    }
+  }, []);
+
+  const clearAllNotifications = useCallback(async () => {
+    try {
+      const res = await api.delete('/notifications/clear-all');
+      if (res.data?.success) {
+        setNotifications([]);
+        setUnreadNotificationsCount(0);
+      }
+    } catch (err) {
+      console.error('[Notifications] Clear all error:', err.message);
+    }
+  }, []);
+
+  const deleteIssue = useCallback(async (id) => {
+    try {
+      const res = await api.delete(`/issues/${id}`);
+      if (res.data?.success) {
+        setIssues(prev => prev.filter(i => i.id !== id));
+      }
+    } catch (err) {
+      console.error('[Issues] Delete error:', err.message);
+      throw err;
+    }
+  }, []);
+
+  const clearIssues = useCallback(async (status) => {
+    try {
+      const url = status && status !== 'all' ? `/issues/clear?status=${status}` : '/issues/clear';
+      const res = await api.delete(url);
+      if (res.data?.success) {
+        setIssues(prev => (status && status !== 'all' ? prev.filter(i => i.status !== status) : []));
+      }
+    } catch (err) {
+      console.error('[Issues] Clear error:', err.message);
+      throw err;
+    }
+  }, []);
+
   useEffect(() => {
     if (!token || !user) {
       if (socketRef.current) {
@@ -187,6 +240,14 @@ export function SocketProvider({ children }) {
       setIssues(prev => prev.map(i => i.id === issue.id ? issue : i));
     });
 
+    socket.on('issue_deleted', ({ id }) => {
+      setIssues(prev => prev.filter(i => i.id !== id));
+    });
+
+    socket.on('issues_cleared', ({ status }) => {
+      setIssues(prev => (status && status !== 'all' ? prev.filter(i => i.status !== status) : []));
+    });
+
     // ── Destination & Geofence events ──
     socket.on('destination_updated', ({ action, destination, destinationId }) => {
       if (action === 'create' && destination) {
@@ -264,6 +325,10 @@ export function SocketProvider({ children }) {
       reloadNotifications,
       markNotificationRead,
       markAllNotificationsRead,
+      deleteNotification,
+      clearAllNotifications,
+      deleteIssue,
+      clearIssues,
       emitLocationUpdate, emitStatusChange, emitIssueReported,
     }}>
       {children}
