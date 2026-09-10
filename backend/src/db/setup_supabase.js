@@ -168,6 +168,17 @@ CREATE INDEX IF NOT EXISTS idx_driver_assignments_dest ON driver_assignments(des
 CREATE INDEX IF NOT EXISTS idx_geofence_notifications_mgr ON geofence_notifications(manager_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_work_logs_driver ON work_logs(driver_id, completed_at DESC);
 CREATE INDEX IF NOT EXISTS idx_work_logs_completed_at ON work_logs(completed_at DESC);
+
+-- ROW LEVEL SECURITY (Protects PostgREST public endpoint while allowing backend DB access)
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE driver_locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE location_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE destinations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE driver_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE issues ENABLE ROW LEVEL SECURITY;
+ALTER TABLE geofence_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE work_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blood_categories ENABLE ROW LEVEL SECURITY;
 `;
 
 async function setupSupabase() {
