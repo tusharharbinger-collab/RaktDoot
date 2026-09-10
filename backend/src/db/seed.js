@@ -195,6 +195,89 @@ async function seedDatabase(force = false) {
     }
   }
 
+  console.log('✨ Destination seed complete!');
+
+  // Seed initial sample work logs if empty
+  const existingLogsCount = dbGet('SELECT COUNT(*) as count FROM work_logs')?.count || 0;
+  if (existingLogsCount === 0) {
+    console.log('📋 Seeding initial completed blood runs in work logs...');
+    const now = Date.now();
+    const sampleWorkLogs = [
+      {
+        id: 'wl-seed-001',
+        driver_id: 'user-drv-001',
+        destination_id: 'dest-pune-sancheti',
+        source_name: 'Jankalyan Blood Centre (Swargate HQ)',
+        destination_name: 'Sancheti Hospital',
+        destination_address: '16, Shivajinagar, Pune, Maharashtra 411005',
+        urgency: 'normal',
+        notes: '2 Units O-Negative Packed Red Blood Cells (PRBC) transferred safely under 4°C cold chain.',
+        assigned_at: new Date(now - 3 * 3600 * 1000).toISOString(),
+        accepted_at: new Date(now - 2.8 * 3600 * 1000).toISOString(),
+        completed_at: new Date(now - 2.4 * 3600 * 1000).toISOString(),
+        duration_mins: 24,
+        distance_km: 3.8,
+      },
+      {
+        id: 'wl-seed-002',
+        driver_id: 'user-drv-002',
+        destination_id: 'dest-pune-deenanath',
+        source_name: 'Jankalyan Blood Centre (Swargate HQ)',
+        destination_name: 'Deenanath Mangeshkar Hospital',
+        destination_address: 'Near Mhatre Bridge, Erandwane, Pune 411004',
+        urgency: 'urgent',
+        notes: '4 Units Single Donor Platelets (SDP) for ICU oncology recipient. Maintained agitation and 22°C temperature.',
+        assigned_at: new Date(now - 1.5 * 3600 * 1000).toISOString(),
+        accepted_at: new Date(now - 1.4 * 3600 * 1000).toISOString(),
+        completed_at: new Date(now - 1.0 * 3600 * 1000).toISOString(),
+        duration_mins: 22,
+        distance_km: 4.5,
+      },
+      {
+        id: 'wl-seed-003',
+        driver_id: 'user-drv-003',
+        destination_id: 'dest-pune-rubyhall',
+        source_name: 'Jankalyan Blood Centre (Swargate HQ)',
+        destination_name: 'Ruby Hall Clinic',
+        destination_address: '40, Sassoon Road, Sangamvadi, Pune 411001',
+        urgency: 'emergency',
+        notes: '🚨 STAT: Emergency trauma surgery blood supply (3 units AB+ and 2 units Cryoprecipitate). Priority delivery complete.',
+        assigned_at: new Date(now - 45 * 60 * 1000).toISOString(),
+        accepted_at: new Date(now - 42 * 60 * 1000).toISOString(),
+        completed_at: new Date(now - 14 * 60 * 1000).toISOString(),
+        duration_mins: 28,
+        distance_km: 6.2,
+      },
+    ];
+
+    for (const log of sampleWorkLogs) {
+      dbRun(`
+        INSERT INTO work_logs (
+          id, assignment_id, driver_id, destination_id,
+          source_name, destination_name, destination_address,
+          urgency, notes, assigned_at, accepted_at, completed_at,
+          duration_mins, distance_km, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `, [
+        log.id,
+        'assign-' + log.id,
+        log.driver_id,
+        log.destination_id,
+        log.source_name,
+        log.destination_name,
+        log.destination_address,
+        log.urgency,
+        log.notes,
+        log.assigned_at,
+        log.accepted_at,
+        log.completed_at,
+        log.duration_mins,
+        log.distance_km,
+      ]);
+    }
+    console.log(`  ✅ Seeded ${sampleWorkLogs.length} initial completed work logs.`);
+  }
+
   console.log('✨ Seed check complete!');
 }
 

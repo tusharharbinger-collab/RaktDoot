@@ -6,6 +6,7 @@ const { upsertLocation, getAllDriversWithLocations } = require('../modules/drive
 const { getActiveAssignmentForDriver, updateAssignmentStatus } = require('../modules/assignments/assignments.service');
 const { createGeofenceNotification } = require('../modules/notifications/notifications.service');
 const { getAllDestinations } = require('../modules/destinations/destinations.service');
+const worklogsService = require('../modules/worklogs/worklogs.service');
 
 /** @type {import('socket.io').Server} */
 let io;
@@ -301,16 +302,82 @@ function initSocket(httpServer) {
           assignment: updated,
         });
 
+        // ── DRIVER REJECTED REQUEST ──
+        if (status === 'rejected') {
+          const notif = createGeofenceNotification({
+            manager_id: updated.assigned_by || 'all',
+            driver_id: updated.driver_id,
+            destination_id: updated.destination_id,
+            assignment_id: updated.id,
+            type: 'request_rejected',
+            message: `DECLINED: Driver ${updated.driver_name || user.name} rejected the collection request for ${updated.destination_name}. Please reassign to another driver.`,
+            distance_m: 0,
+          });
+
+          io.to('fleet-monitors').emit('notification_new', { notification: notif });
+          io.to('fleet-monitors').emit('request_rejected_alert', {
+            assignment_id: updated.id,
+            driver_id: updated.driver_id,
+            driver_name: updated.driver_name || user.name,
+            destination_id: updated.destination_id,
+            destination_name: updated.destination_name,
+            message: `Driver ${updated.driver_name || user.name} rejected the collection request for ${updated.destination_name}.`,
+          });
+        }
+
+        // ── WORK COMPLETED: LOG TO DB & NOTIFY ──
         if (status === 'completed') {
+          let durationMins = 0;
+          const startTime = updated.accepted_at || updated.assigned_at;
+          if (startTime) {
+            const diffMs = new Date(updated.completed_at || Date.now()) - new Date(startTime);
+            durationMins = Math.max(1, Math.round(diffMs / 60000));
+          }
+
+          let workLog = null;
+          try {
+            workLog = worklogsService.createWorkLog({
+              assignment_id: updated.id,
+              driver_id: updated.driver_id,
+              destination_id: updated.destination_id,
+              source_name: updated.source_name,
+              destination_name: updated.destination_name,
+              destination_address: updated.destination_address,
+              urgency: updated.urgency,
+              notes: updated.notes,
+              assigned_at: updated.assigned_at,
+              accepted_at: updated.accepted_at,
+              completed_at: updated.completed_at || new Date().toISOString(),
+              duration_mins: durationMins,
+            });
+          } catch (wlErr) {
+            console.warn('[Socket] workLog creation warning:', wlErr.message);
+          }
+
+          const notif = createGeofenceNotification({
+            manager_id: updated.assigned_by || 'all',
+            driver_id: updated.driver_id,
+            destination_id: updated.destination_id,
+            assignment_id: updated.id,
+            type: 'work_completed',
+            message: `WORK COMPLETED: Driver ${updated.driver_name || user.name} delivered / collected blood at ${updated.destination_name} (${durationMins}m run). Saved in Work Log.`,
+            distance_m: 0,
+          });
+
+          io.to('fleet-monitors').emit('notification_new', { notification: notif });
           io.to('fleet-monitors').emit('work_completed_alert', {
+            workLog,
             assignment_id: updated.id,
             driver_id: updated.driver_id,
             driver_name: updated.driver_name || user.name,
             destination_id: updated.destination_id,
             destination_name: updated.destination_name,
             completed_at: updated.completed_at || new Date().toISOString(),
-            message: `WORK COMPLETED: Driver ${updated.driver_name || user.name} reached ${updated.destination_name} and completed the blood collection task!`,
+            message: `WORK COMPLETED: Driver ${updated.driver_name || user.name} reached ${updated.destination_name} and completed blood collection! (${durationMins}m run)`,
           });
+          if (workLog) {
+            io.to('fleet-monitors').emit('work_log_added', { workLog });
+          }
         }
       } catch (err) {
         console.error('[Socket] ❌ Error handling task_response:', err.message);

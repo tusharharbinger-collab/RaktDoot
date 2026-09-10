@@ -6,8 +6,7 @@ import DriverDetailsDrawer from '../components/manager/DriverDetailsDrawer';
 import DestinationModal from '../components/manager/DestinationModal';
 import AssignDriverModal from '../components/manager/AssignDriverModal';
 import CreateCollectionRequestModal from '../components/manager/CreateCollectionRequestModal';
-import GeofenceControlPanel, { getHaversineDistanceKm } from '../components/manager/GeofenceControlPanel';
-import { ToastProvider, useToast } from '../components/common/ToastContainer';
+import { useToast } from '../components/common/ToastContainer';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -320,9 +319,5 @@ function ManagerMapContent() {
 }
 
 export default function ManagerMapPage() {
-  return (
-    <ToastProvider>
-      <ManagerMapContent />
-    </ToastProvider>
-  );
+  return <ManagerMapContent />;
 }

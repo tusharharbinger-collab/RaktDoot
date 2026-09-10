@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Map, Users, AlertTriangle, BarChart3,
   Settings, LogOut, Wifi, WifiOff, Shield, Truck,
-  MapPin, Bell, Smartphone, Download
+  MapPin, Bell, Smartphone, Download, ClipboardList
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
@@ -35,6 +35,7 @@ export default function Sidebar() {
     { to: '/manager/map', icon: Map, label: t.liveVehicleTracking },
     { to: '/manager/destinations', icon: MapPin, label: t.destinations || 'Destinations' },
     { to: '/manager/notifications', icon: Bell, label: t.notifications || 'Notifications', badge: unreadNotificationsCount },
+    { to: '/manager/work-logs', icon: ClipboardList, label: t.workLogs || 'Work Logs' },
     { to: '/manager/issues', icon: AlertTriangle, label: t.issuesFeed },
   ];
 

@@ -44,6 +44,35 @@ function initDB() {
   try { db.run('ALTER TABLE users ADD COLUMN push_token TEXT'); } catch (_) {}
   try { db.run('ALTER TABLE geofence_notifications ADD COLUMN distance_m REAL'); } catch (_) {}
 
+  // Work Logs Table for completed delivery & collection task records
+  try {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS work_logs (
+        id                  TEXT PRIMARY KEY,
+        assignment_id       TEXT NOT NULL,
+        driver_id           TEXT NOT NULL,
+        destination_id      TEXT NOT NULL,
+        source_name         TEXT DEFAULT 'Jankalyan Blood Centre (Swargate HQ)',
+        destination_name    TEXT NOT NULL,
+        destination_address TEXT,
+        urgency             TEXT DEFAULT 'normal',
+        notes               TEXT,
+        assigned_at         TEXT,
+        accepted_at         TEXT,
+        completed_at        TEXT NOT NULL DEFAULT (datetime('now')),
+        duration_mins       INTEGER DEFAULT 0,
+        distance_km         REAL DEFAULT 0,
+        created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (driver_id) REFERENCES users(id),
+        FOREIGN KEY (destination_id) REFERENCES destinations(id)
+      )
+    `);
+    db.run('CREATE INDEX IF NOT EXISTS idx_work_logs_driver ON work_logs(driver_id, completed_at DESC)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_work_logs_completed_at ON work_logs(completed_at DESC)');
+  } catch (err) {
+    console.warn('[DB] work_logs table init warning:', err.message);
+  }
+
   // Ensure permanent Home Location (Jankalyan Blood Centre HQ, Swargate, Pune) is configured
   try {
     const homeStmt = db.prepare("SELECT id FROM destinations WHERE is_home = 1 OR id = 'dest-home-001'");

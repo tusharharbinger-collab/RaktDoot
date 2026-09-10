@@ -12,6 +12,7 @@ const adminRoutes = require('./src/modules/admin/admin.routes');
 const destinationsRoutes = require('./src/modules/destinations/destinations.routes');
 const assignmentsRoutes = require('./src/modules/assignments/assignments.routes');
 const notificationsRoutes = require('./src/modules/notifications/notifications.routes');
+const worklogsRoutes = require('./src/modules/worklogs/worklogs.routes');
 const { errorHandler } = require('./src/middlewares/error.middleware');
 
 const app = express();
@@ -111,6 +112,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/destinations', destinationsRoutes);
 app.use('/api/assignments', assignmentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/work-logs', worklogsRoutes);
 
 // ─── 404 FALLBACK ─────────────────────────────────────────────────────────────
 app.use((_req, res) => {

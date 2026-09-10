@@ -1,5 +1,7 @@
 'use strict';
 const assignmentsService = require('./assignments.service');
+const notificationsService = require('../notifications/notifications.service');
+const worklogsService = require('../worklogs/worklogs.service');
 const { getIO } = require('../../sockets/socket.handler');
 
 function getAllAssignments(req, res, next) {
@@ -123,8 +125,64 @@ function updateAssignmentStatus(req, res, next) {
       io.to('fleet-monitors').emit('request_status_updated', { assignment });
       io.to(`driver:${assignment.driver_id}`).emit('assignment_status_changed', { assignment });
 
-      // If work completed, broadcast special work_completed_alert to fleet monitors
+      // ── DRIVER REJECTED REQUEST: NOTIFY MANAGER ──
+      if (status === 'rejected') {
+        const notif = notificationsService.createGeofenceNotification({
+          manager_id: assignment.assigned_by || 'all',
+          driver_id: assignment.driver_id,
+          destination_id: assignment.destination_id,
+          assignment_id: assignment.id,
+          type: 'request_rejected',
+          message: `DECLINED: Driver ${assignment.driver_name} rejected the collection request for ${assignment.destination_name}. Please reassign to another driver.`,
+          distance_m: 0,
+        });
+
+        io.to('fleet-monitors').emit('notification_new', { notification: notif });
+        io.to('fleet-monitors').emit('request_rejected_alert', {
+          assignment_id: assignment.id,
+          driver_id: assignment.driver_id,
+          driver_name: assignment.driver_name,
+          destination_id: assignment.destination_id,
+          destination_name: assignment.destination_name,
+          message: `Driver ${assignment.driver_name} rejected the collection request for ${assignment.destination_name}.`,
+        });
+      }
+
+      // ── WORK COMPLETED: STORE IN WORK LOG & NOTIFY MANAGER ──
       if (status === 'completed') {
+        let durationMins = 0;
+        const startTime = assignment.accepted_at || assignment.assigned_at;
+        if (startTime) {
+          const diffMs = new Date(assignment.completed_at || Date.now()) - new Date(startTime);
+          durationMins = Math.max(1, Math.round(diffMs / 60000));
+        }
+
+        const workLog = worklogsService.createWorkLog({
+          assignment_id: assignment.id,
+          driver_id: assignment.driver_id,
+          destination_id: assignment.destination_id,
+          source_name: assignment.source_name,
+          destination_name: assignment.destination_name,
+          destination_address: assignment.destination_address,
+          urgency: assignment.urgency,
+          notes: assignment.notes,
+          assigned_at: assignment.assigned_at,
+          accepted_at: assignment.accepted_at,
+          completed_at: assignment.completed_at || new Date().toISOString(),
+          duration_mins: durationMins,
+        });
+
+        const notif = notificationsService.createGeofenceNotification({
+          manager_id: assignment.assigned_by || 'all',
+          driver_id: assignment.driver_id,
+          destination_id: assignment.destination_id,
+          assignment_id: assignment.id,
+          type: 'work_completed',
+          message: `WORK COMPLETED: Driver ${assignment.driver_name} delivered / collected blood at ${assignment.destination_name} (${durationMins}m run). Saved in Work Log.`,
+          distance_m: 0,
+        });
+
+        io.to('fleet-monitors').emit('notification_new', { notification: notif });
         io.to('fleet-monitors').emit('work_completed_alert', {
           assignment_id: assignment.id,
           driver_id: assignment.driver_id,
@@ -132,10 +190,15 @@ function updateAssignmentStatus(req, res, next) {
           destination_id: assignment.destination_id,
           destination_name: assignment.destination_name,
           completed_at: assignment.completed_at || new Date().toISOString(),
+          duration_mins: durationMins,
+          work_log_id: workLog?.id,
           message: `WORK COMPLETED: Driver ${assignment.driver_name} reached ${assignment.destination_name} and completed the blood collection task!`,
         });
+        io.to('fleet-monitors').emit('work_log_added', { workLog });
       }
-    } catch (_) {}
+    } catch (broadcastErr) {
+      console.warn('[Assignments] Socket broadcast / notification error:', broadcastErr.message);
+    }
 
     res.json({ success: true, data: assignment });
   } catch (err) {

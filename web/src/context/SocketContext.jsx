@@ -1,12 +1,14 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { useToast } from '../components/common/ToastContainer';
 import api, { SOCKET_URL } from '../services/api';
 
 const SocketContext = createContext(null);
 
 export function SocketProvider({ children }) {
   const { token, user } = useAuth();
+  const { addToast } = useToast();
   const socketRef = useRef(null);
   const [connected, setConnected] = useState(false);
   const [fleetDrivers, setFleetDrivers] = useState({});
@@ -285,10 +287,48 @@ export function SocketProvider({ children }) {
       reloadDestinations();
     });
 
+    socket.on('notification_new', (data) => {
+      if (data?.notification) {
+        setNotifications(prev => {
+          if (prev.some(n => n.id === data.notification.id)) return prev;
+          return [data.notification, ...prev].slice(0, 100);
+        });
+        setUnreadNotificationsCount(prev => prev + 1);
+      }
+    });
+
+    socket.on('request_rejected_alert', (data) => {
+      addToast({
+        title: '🚨 Collection Request Declined',
+        message: data.message || `Driver ${data.driver_name || 'Driver'} declined collection for ${data.destination_name || 'Destination'}.`,
+        type: 'urgent',
+        duration: 9000,
+      });
+      reloadNotifications();
+      reloadDestinations();
+    });
+
+    socket.on('work_completed_alert', (data) => {
+      addToast({
+        title: '✅ Blood Run Completed & Logged',
+        message: data.message || `Driver completed collection and saved in Work Log.`,
+        type: 'completed',
+        duration: 7000,
+      });
+      reloadNotifications();
+      reloadDestinations();
+    });
+
     socket.on('geofence_alert', (data) => {
       if (data?.notification) {
         setNotifications(prev => [data.notification, ...prev].slice(0, 100));
         setUnreadNotificationsCount(prev => prev + 1);
+        addToast({
+          title: '📍 Proximity Geofence Alert',
+          message: data.notification.message,
+          type: 'entry',
+          duration: 6000,
+        });
       }
     });
 

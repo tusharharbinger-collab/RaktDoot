@@ -178,6 +178,15 @@ export default function ManagerNotificationsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {displayedNotifications.map((notif) => {
               const isUnread = !notif.is_read;
+              const isRejected = notif.type === 'request_rejected';
+              const isCompleted = notif.type === 'work_completed';
+
+              const borderAccentColor = isRejected
+                ? '#ef4444'
+                : isCompleted
+                ? '#10b981'
+                : '#3b82f6';
+
               return (
                 <div
                   key={notif.id}
@@ -187,11 +196,13 @@ export default function ManagerNotificationsPage() {
                     justifyContent: 'space-between',
                     padding: '14px 18px',
                     borderRadius: 12,
-                    background: isUnread ? 'rgba(30, 41, 59, 0.7)' : 'var(--bg-card)',
+                    background: isUnread
+                      ? (isRejected ? 'rgba(239, 68, 68, 0.08)' : 'rgba(30, 41, 59, 0.7)')
+                      : 'var(--bg-card)',
                     border: isUnread
-                      ? '1px solid rgba(59, 130, 246, 0.4)'
+                      ? (isRejected ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(59, 130, 246, 0.4)')
                       : '1px solid var(--border-default)',
-                    borderLeft: isUnread ? '4px solid #3b82f6' : '1px solid var(--border-default)',
+                    borderLeft: isUnread ? `4px solid ${borderAccentColor}` : '1px solid var(--border-default)',
                     transition: 'all 0.15s ease',
                   }}
                 >
@@ -222,20 +233,52 @@ export default function ManagerNotificationsPage() {
                         <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: 13.5 }}>
                           {notif.driver_name}
                         </span>
-                        <span
-                          style={{
-                            fontSize: 10.5,
-                            fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: 10,
-                            background: 'rgba(16, 185, 129, 0.15)',
-                            color: '#34d399',
-                            border: '1px solid rgba(16, 185, 129, 0.3)',
-                          }}
-                        >
-                          📍 Entered Geofence
-                        </span>
-                        {notif.distance_m != null && (
+
+                        {isRejected ? (
+                          <span
+                            style={{
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: 10,
+                              background: 'rgba(239, 68, 68, 0.18)',
+                              color: '#f87171',
+                              border: '1px solid rgba(239, 68, 68, 0.35)',
+                            }}
+                          >
+                            🚫 Request Declined
+                          </span>
+                        ) : isCompleted ? (
+                          <span
+                            style={{
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: 10,
+                              background: 'rgba(16, 185, 129, 0.18)',
+                              color: '#34d399',
+                              border: '1px solid rgba(16, 185, 129, 0.35)',
+                            }}
+                          >
+                            ✅ Work Completed
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: 10,
+                              background: 'rgba(16, 185, 129, 0.15)',
+                              color: '#34d399',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                            }}
+                          >
+                            📍 Entered Geofence
+                          </span>
+                        )}
+
+                        {notif.distance_m != null && notif.distance_m > 0 && (
                           <span style={{ fontSize: 11, color: '#94a3b8' }}>
                             ({notif.distance_m}m away)
                           </span>
@@ -261,6 +304,29 @@ export default function ManagerNotificationsPage() {
 
                   {/* Right Actions */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                    {isRejected && (
+                      <button
+                        onClick={() => navigate('/manager/destinations')}
+                        className="btn btn-primary btn-sm"
+                        style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 4, background: '#ef4444', borderColor: '#f87171' }}
+                        title="Reassign to another driver"
+                      >
+                        <span>Reassign Driver</span>
+                      </button>
+                    )}
+
+                    {isCompleted && (
+                      <button
+                        onClick={() => navigate('/manager/work-logs')}
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 4 }}
+                        title="View completed run in work logs"
+                      >
+                        <ExternalLink size={13} />
+                        <span>View Work Log</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={() => navigate('/manager/map')}
                       className="btn btn-ghost btn-sm"
