@@ -140,12 +140,15 @@ export default function CreateCollectionRequestModal({
       <div
         style={{
           width: '100%',
-          maxWidth: 520,
-          background: '#0f172a',
+          maxWidth: 680,
+          maxHeight: '92vh',
+          background: '#0b1120',
           borderRadius: 16,
           border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 24px 48px rgba(0, 0, 0, 0.65)',
+          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.75)',
           overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
           animation: 'fadeIn 0.2s ease',
           fontFamily: 'Inter, sans-serif',
         }}
@@ -153,21 +156,23 @@ export default function CreateCollectionRequestModal({
         {/* Header */}
         <div
           style={{
-            padding: '16px 20px',
-            background: 'rgba(239, 68, 68, 0.1)',
+            padding: '16px 22px',
+            background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div
               style={{
-                width: 36,
-                height: 36,
+                width: 38,
+                height: 38,
                 borderRadius: 10,
-                background: 'rgba(239, 68, 68, 0.25)',
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -177,11 +182,11 @@ export default function CreateCollectionRequestModal({
               <Hospital size={20} />
             </div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#f8fafc' }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#f8fafc', letterSpacing: '0.2px' }}>
                 New Blood Collection Request
               </div>
-              <div style={{ fontSize: 11.5, color: '#94a3b8' }}>
-                Dispatch sample pickup and hospital delivery
+              <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>
+                Dispatch sample pickup and hospital delivery route
               </div>
             </div>
           </div>
@@ -189,19 +194,24 @@ export default function CreateCollectionRequestModal({
           <button
             onClick={onClose}
             style={{
-              background: 'none',
-              border: 'none',
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 8,
               color: '#94a3b8',
               cursor: 'pointer',
-              padding: 4,
+              padding: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.15s ease',
             }}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: 20 }}>
+        {/* Scrollable Form Body */}
+        <form onSubmit={handleSubmit} style={{ overflowY: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {error && (
             <div
               style={{
@@ -211,163 +221,201 @@ export default function CreateCollectionRequestModal({
                 border: '1px solid rgba(239, 68, 68, 0.35)',
                 color: '#fca5a5',
                 fontSize: 12.5,
-                marginBottom: 16,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
               }}
             >
-              <AlertTriangle size={16} />
+              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
               <span>{error}</span>
             </div>
           )}
 
-          {/* 1. Source Location (Defaulted to Jankalyan HQ) */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              Source Dispatch Location (Origin)
-            </label>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 12px',
-              borderRadius: 8,
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid #1e293b',
-              color: '#f8fafc',
-              fontSize: 12.5,
-            }}>
-              <MapPin size={15} style={{ color: '#ef4444', flexShrink: 0 }} />
-              <input
-                type="text"
-                value={sourceName}
-                onChange={(e) => setSourceName(e.target.value)}
-                style={{
-                  background: 'none',
-                  border: 'none',
+          {/* Section 1: Route & Dispatch Logistics */}
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.07)',
+              borderRadius: 12,
+              padding: '14px 16px',
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Truck size={13} />
+              <span>Dispatch Logistics & Route</span>
+            </div>
+
+            {/* Row 1: Origin & Target Hospital */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, marginBottom: 12 }}>
+              {/* Origin */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
+                  Origin (Source Hub)
+                </label>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  background: '#131c2e',
+                  border: '1px solid #1e293b',
                   color: '#f8fafc',
                   fontSize: 12.5,
-                  fontWeight: 600,
-                  width: '100%',
-                  outline: 'none',
-                }}
-              />
-            </div>
-          </div>
-
-          {/* 2. Destination Hospital Selector */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              Target Hospital / Collection Center
-            </label>
-            <select
-              value={destinationId}
-              onChange={(e) => setDestinationId(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '9px 12px',
-                borderRadius: 8,
-                background: '#0b1120',
-                border: '1px solid #1e293b',
-                color: '#f8fafc',
-                fontSize: 13,
-                outline: 'none',
-              }}
-            >
-              <option value="" disabled>-- Select Destination Hospital --</option>
-              {hospitalList.map(h => (
-                <option key={h.id} value={h.id}>
-                  {h.name} — {h.address || 'Pune'}
-                </option>
-              ))}
-            </select>
-            {selectedHospital && (
-              <div style={{ fontSize: 11, color: '#38bdf8', marginTop: 4 }}>
-                Geofence Radius: {selectedHospital.radius_m}m · Coordinates: {parseFloat(selectedHospital.lat).toFixed(4)}, {parseFloat(selectedHospital.lng).toFixed(4)}
+                }}>
+                  <MapPin size={15} style={{ color: '#ef4444', flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    value={sourceName}
+                    onChange={(e) => setSourceName(e.target.value)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#f8fafc',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      width: '100%',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* 3. Driver Selector */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              Assign Delivery Driver
-            </label>
-            <select
-              value={driverId}
-              onChange={(e) => setDriverId(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '9px 12px',
-                borderRadius: 8,
-                background: '#0b1120',
-                border: '1px solid #1e293b',
-                color: '#f8fafc',
-                fontSize: 13,
-                outline: 'none',
-              }}
-            >
-              <option value="" disabled>-- Select Fleet Driver --</option>
-              {fleetDriversList.map(d => (
-                <option key={d.id} value={d.id}>
-                  {d.name} [{d.vehicle_type === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'}{d.vehicle_number ? ` · ${d.vehicle_number}` : ''}] — {d.status?.toUpperCase()}
-                </option>
-              ))}
-            </select>
-            {selectedDriver && (
-              <div style={{ fontSize: 11, color: '#10b981', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span>● Status: {selectedDriver.status}</span>
-                <span>·</span>
-                <span style={{ color: selectedDriver.vehicle_type === 'four_wheeler' ? '#38bdf8' : '#34d399', fontWeight: 700 }}>
-                  {selectedDriver.vehicle_type === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'} {selectedDriver.vehicle_number ? `(${selectedDriver.vehicle_number})` : ''}
-                </span>
-                <span>·</span>
-                <span>Speed: {Math.round(selectedDriver.speed || 0)} km/h</span>
-              </div>
-            )}
-          </div>
-
-          {/* 4. Urgency Level */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              Urgency Priority
-            </label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[
-                { id: 'normal', label: 'Normal Routine', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)' },
-                { id: 'urgent', label: 'Urgent', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
-                { id: 'emergency', label: 'STAT / Emergency', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
-              ].map(u => (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => setUrgency(u.id)}
+              {/* Destination Hospital */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
+                  Target Hospital / Destination *
+                </label>
+                <select
+                  value={destinationId}
+                  onChange={(e) => setDestinationId(e.target.value)}
                   style={{
-                    flex: 1,
-                    padding: '8px 6px',
+                    width: '100%',
+                    padding: '9px 12px',
                     borderRadius: 8,
-                    border: urgency === u.id ? `1.5px solid ${u.color}` : '1px solid rgba(255, 255, 255, 0.08)',
-                    background: urgency === u.id ? u.bg : 'rgba(255, 255, 255, 0.03)',
-                    color: urgency === u.id ? u.color : '#94a3b8',
-                    fontSize: 11.5,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
+                    background: '#131c2e',
+                    border: '1px solid #1e293b',
+                    color: '#f8fafc',
+                    fontSize: 12.5,
+                    outline: 'none',
                   }}
                 >
-                  {u.label}
-                </button>
-              ))}
+                  <option value="" disabled>-- Select Destination Hospital --</option>
+                  {hospitalList.map(h => (
+                    <option key={h.id} value={h.id}>
+                      {h.name} {h.address ? `(${h.address.split(',')[0]})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {selectedHospital && (
+                  <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
+                    📍 Geofence: <span style={{ color: '#38bdf8' }}>{selectedHospital.radius_m}m radius</span> · {selectedHospital.address || 'Pune'}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Row 2: Driver & Urgency */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+              {/* Assign Driver */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
+                  Assign Fleet Driver *
+                </label>
+                <select
+                  value={driverId}
+                  onChange={(e) => setDriverId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    background: '#131c2e',
+                    border: '1px solid #1e293b',
+                    color: '#f8fafc',
+                    fontSize: 12.5,
+                    outline: 'none',
+                  }}
+                >
+                  <option value="" disabled>-- Select Fleet Driver --</option>
+                  {fleetDriversList.map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} [{d.vehicle_type === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'}{d.vehicle_number ? ` · ${d.vehicle_number}` : ''}]
+                    </option>
+                  ))}
+                </select>
+                {selectedDriver && (
+                  <div style={{ fontSize: 11, color: '#10b981', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} />
+                    <span style={{ textTransform: 'capitalize' }}>{selectedDriver.status}</span>
+                    <span style={{ color: '#475569' }}>·</span>
+                    <span style={{ color: selectedDriver.vehicle_type === 'four_wheeler' ? '#38bdf8' : '#34d399', fontWeight: 600 }}>
+                      {selectedDriver.vehicle_type === 'four_wheeler' ? '🚐 4-Wheeler' : '🛵 2-Wheeler'} {selectedDriver.vehicle_number ? `(${selectedDriver.vehicle_number})` : ''}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Urgency Level */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
+                  Dispatch Priority
+                </label>
+                <div style={{ display: 'flex', gap: 6, height: 38 }}>
+                  {[
+                    { id: 'normal', label: 'Routine', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.18)' },
+                    { id: 'urgent', label: 'Urgent', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.18)' },
+                    { id: 'emergency', label: 'STAT Alert', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.22)' },
+                  ].map(u => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => setUrgency(u.id)}
+                      style={{
+                        flex: 1,
+                        borderRadius: 8,
+                        border: urgency === u.id ? `1.5px solid ${u.color}` : '1px solid rgba(255, 255, 255, 0.08)',
+                        background: urgency === u.id ? u.bg : '#131c2e',
+                        color: urgency === u.id ? u.color : '#94a3b8',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: u.color,
+                        opacity: urgency === u.id ? 1 : 0.4,
+                      }} />
+                      <span>{u.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 5. Blood Component Category */}
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
-                Blood Component Category *
-              </label>
+          {/* Section 2: Blood Component & Units Specifications */}
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.07)',
+              borderRadius: 12,
+              padding: '14px 16px',
+            }}
+          >
+            {/* Category Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Droplets size={13} />
+                <span>Blood Component & Quantity</span>
+              </div>
               {user?.role === 'admin' && (
                 <button
                   type="button"
@@ -393,14 +441,17 @@ export default function CreateCollectionRequestModal({
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+            {/* Blood Category Selector (Clean, 4-in-a-row or 2x2 grid) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: 8, marginBottom: 14 }}>
               {categoriesList.map((cat) => {
                 const isSelected = category === cat.code;
                 let accent = '#ef4444';
                 let iconSymbol = '🩸';
-                if (cat.code === 'plasma') { accent = '#f59e0b'; iconSymbol = '🟡'; }
-                else if (cat.code === 'cryo') { accent = '#38bdf8'; iconSymbol = '🧊'; }
-                else if (cat.code === 'platelets') { accent = '#a855f7'; iconSymbol = '⚡'; }
+                let shortBadge = 'PRBC';
+                if (cat.code === 'plasma') { accent = '#f59e0b'; iconSymbol = '🟡'; shortBadge = 'FFP'; }
+                else if (cat.code === 'cryo') { accent = '#38bdf8'; iconSymbol = '🧊'; shortBadge = 'CRYO'; }
+                else if (cat.code === 'platelets') { accent = '#a855f7'; iconSymbol = '⚡'; shortBadge = 'SDP'; }
+                else { shortBadge = cat.code.toUpperCase().slice(0, 4); }
 
                 return (
                   <button
@@ -408,181 +459,216 @@ export default function CreateCollectionRequestModal({
                     type="button"
                     onClick={() => setCategory(cat.code)}
                     style={{
-                      padding: '8px 10px',
-                      borderRadius: 8,
+                      padding: '10px 10px',
+                      borderRadius: 10,
                       border: isSelected ? `1.5px solid ${accent}` : '1px solid rgba(255, 255, 255, 0.08)',
-                      background: isSelected ? `${accent}22` : 'rgba(255, 255, 255, 0.02)',
+                      background: isSelected ? `${accent}1f` : '#131c2e',
                       color: isSelected ? '#ffffff' : '#94a3b8',
-                      textAlign: 'left',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
                       transition: 'all 0.15s ease',
+                      boxShadow: isSelected ? `0 0 12px ${accent}25` : 'none',
                     }}
                   >
                     <span style={{ fontSize: 16 }}>{iconSymbol}</span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: isSelected ? '#ffffff' : '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: isSelected ? '#ffffff' : '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {cat.name}
                       </div>
-                      {cat.description && (
-                        <div style={{ fontSize: 10, color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {cat.description}
-                        </div>
-                      )}
+                      <div style={{ fontSize: 9.5, fontWeight: 700, color: isSelected ? accent : '#64748b', letterSpacing: '0.4px', marginTop: 1 }}>
+                        {shortBadge}
+                      </div>
                     </div>
                   </button>
                 );
               })}
             </div>
+
+            {/* Quantity Stepper & Delivery Remarks Side by Side */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+              {/* Left: Quantity */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
+                    Quantity (Bags / Units) *
+                  </label>
+                  <span style={{ fontSize: 11, color: '#38bdf8', fontWeight: 700 }}>
+                    {unitCount} {unitCount === 1 ? 'Bag' : 'Bags'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {/* Stepper */}
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: '#131c2e',
+                    border: '1px solid #1e293b',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => setUnitCount(prev => Math.max(1, prev - 1))}
+                      style={{
+                        padding: '8px 10px',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        border: 'none',
+                        color: '#cbd5e1',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Minus size={13} />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={unitCount}
+                      onChange={(e) => setUnitCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      style={{
+                        width: 38,
+                        padding: '6px 0',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#ffffff',
+                        textAlign: 'center',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setUnitCount(prev => Math.min(100, prev + 1))}
+                      style={{
+                        padding: '8px 10px',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        border: 'none',
+                        color: '#cbd5e1',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </div>
+
+                  {/* Quick preset badges */}
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {[1, 2, 4, 6, 10].map(qty => (
+                      <button
+                        key={qty}
+                        type="button"
+                        onClick={() => setUnitCount(qty)}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 6,
+                          background: unitCount === qty ? 'rgba(56, 189, 248, 0.2)' : '#131c2e',
+                          border: unitCount === qty ? '1px solid #38bdf8' : '1px solid #1e293b',
+                          color: unitCount === qty ? '#38bdf8' : '#94a3b8',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          minWidth: 28,
+                        }}
+                      >
+                        {qty}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Instructions */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
+                  Delivery Instructions / ICU Remarks
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g., Crossmatch sample, Dr. Kulkarni ICU, cold-chain temp..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    background: '#131c2e',
+                    border: '1px solid #1e293b',
+                    color: '#f8fafc',
+                    fontSize: 12,
+                    outline: 'none',
+                    resize: 'none',
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* 6. Unit Number or Bags */}
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
-                Unit Number or Bags (Quantity) *
-              </label>
-              <span style={{ fontSize: 11, color: '#38bdf8', fontWeight: 600 }}>
-                {unitCount} {unitCount === 1 ? 'Bag' : 'Bags'} Selected
+          {/* Modal Footer with live summary */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingTop: 6,
+            gap: 12,
+            flexWrap: 'wrap',
+          }}>
+            {/* Live order summary */}
+            <div style={{ fontSize: 11.5, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                padding: '3px 8px',
+                borderRadius: 12,
+                color: '#fca5a5',
+                fontWeight: 600,
+              }}>
+                🩸 {unitCount} {unitCount === 1 ? 'Bag' : 'Bags'} · {categoriesList.find(c => c.code === category)?.name || 'Blood'}
+              </span>
+              <span style={{ color: '#475569' }}>➔</span>
+              <span style={{ color: '#cbd5e1', fontWeight: 600 }}>
+                {selectedHospital ? selectedHospital.name.split('—')[0].trim() : 'Hospital'}
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {/* Stepper */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: '#0b1120',
-                border: '1px solid #1e293b',
-                borderRadius: 8,
-                overflow: 'hidden',
-              }}>
-                <button
-                  type="button"
-                  onClick={() => setUnitCount(prev => Math.max(1, prev - 1))}
-                  style={{
-                    padding: '8px 12px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: 'none',
-                    color: '#cbd5e1',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Minus size={14} />
-                </button>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={unitCount}
-                  onChange={(e) => setUnitCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                  style={{
-                    width: 48,
-                    padding: '6px 0',
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#ffffff',
-                    textAlign: 'center',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    outline: 'none',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setUnitCount(prev => Math.min(100, prev + 1))}
-                  style={{
-                    padding: '8px 12px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: 'none',
-                    color: '#cbd5e1',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-
-              {/* Quick presets */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {[1, 2, 4, 6, 10].map(qty => (
-                  <button
-                    key={qty}
-                    type="button"
-                    onClick={() => setUnitCount(qty)}
-                    style={{
-                      padding: '6px 10px',
-                      borderRadius: 6,
-                      background: unitCount === qty ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                      border: unitCount === qty ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
-                      color: unitCount === qty ? '#38bdf8' : '#94a3b8',
-                      fontSize: 11.5,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {qty} {qty === 1 ? 'Bag' : 'Bags'}
-                  </button>
-                ))}
-              </div>
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '8px 16px', fontSize: 12.5 }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary btn-sm"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 20px',
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  background: urgency === 'emergency' ? '#dc2626' : '#b91c1c',
+                }}
+              >
+                <Send size={14} />
+                <span>{loading ? 'Dispatching...' : 'Dispatch Request'}</span>
+              </button>
             </div>
-          </div>
-
-          {/* 7. Additional Sample Details & Instructions */}
-          <div style={{ marginBottom: 18 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 5 }}>
-              Instructions & Hospital Delivery Remarks
-            </label>
-            <textarea
-              rows={2}
-              placeholder="e.g., crossmatch urgent sample, deliver to Dr. Kulkarni ICU, maintain temperature control"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '9px 12px',
-                borderRadius: 8,
-                background: '#0b1120',
-                border: '1px solid #1e293b',
-                color: '#f8fafc',
-                fontSize: 12.5,
-                outline: 'none',
-                resize: 'none',
-              }}
-            />
-          </div>
-
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-secondary btn-sm"
-              style={{ padding: '8px 16px' }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary btn-sm"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '8px 18px',
-                background: urgency === 'emergency' ? '#dc2626' : '#b91c1c',
-              }}
-            >
-              <Send size={14} />
-              <span>{loading ? 'Dispatching...' : 'Dispatch Request'}</span>
-            </button>
           </div>
         </form>
       </div>
