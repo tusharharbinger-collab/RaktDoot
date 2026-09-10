@@ -21,3 +21,4 @@ delivery_tracking_system.zip
 *.zip
 !backend/public/downloads/*.zip
 *.apk
+!backend/public/downloads/*.apk
