@@ -1482,8 +1482,8 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   harbingerLogoImg: {
-    height: 20,
-    width: 76,
+    height: 22,
+    width: 104,
     flexShrink: 0,
   },
   logoutBtn: {

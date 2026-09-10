@@ -382,7 +382,6 @@ export default function LoginScreen({ onLoginSuccess }) {
           </View>
 
           <View style={s.footer}>
-            <Text style={s.poweredBy}>Powered by</Text>
             <Image source={require('../../assets/harbinger_logo.png')} style={s.harbingerLogo} resizeMode="contain" />
             <Text style={s.copyright}>© 2026 Jankalyan Blood Centre, Pune</Text>
           </View>
@@ -484,8 +483,7 @@ const s = StyleSheet.create({
   quickDemoBtn: { flex: 1, backgroundColor: 'rgba(16,185,129,0.12)', borderWidth: 1, borderColor: 'rgba(16,185,129,0.35)', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
   quickDemoBtnText: { color: '#34d399', fontSize: 11.5, fontWeight: '700' },
   quickDemoBtnSub: { color: '#a7f3d0', fontSize: 9.5, marginTop: 1, opacity: 0.8 },
-  footer: { alignItems: 'center', gap: 6 },
-  poweredBy: { fontSize: 10, color: '#ffffff', letterSpacing: 1.2, textTransform: 'uppercase' },
-  harbingerLogo: { width: 130, height: 40, opacity: 0.90 },
+  footer: { alignItems: 'center', gap: 8, marginTop: 10 },
+  harbingerLogo: { width: 160, height: 34, opacity: 0.95 },
   copyright: { fontSize: 11, color: '#ffffff', textAlign: 'center' },
 });

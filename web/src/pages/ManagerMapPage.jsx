@@ -47,23 +47,18 @@ function ManagerMapContent() {
   // ── Hysteresis Proximity Entry Detection State Machine ──
   // driverProximityState: Map<driverId, boolean (isCurrentlyInside)>
   const driverProximityState = useRef(new Map());
-  const initialMountRef = useRef(true);
+  const prevGeofenceParams = useRef({ radiusKm, centerName: geofenceCenter?.name });
 
   useEffect(() => {
-    // Skip firing mass alerts on the very first render load
-    if (initialMountRef.current) {
-      fleetDriversList.forEach(driver => {
-        if (driver.lat && driver.lng) {
-          const dist = getHaversineDistanceKm(geofenceCenter.lat, geofenceCenter.lng, driver.lat, driver.lng);
-          const isInside = dist != null && dist <= radiusKm;
-          driverProximityState.current.set(driver.id, isInside);
-        }
-      });
-      initialMountRef.current = false;
-      return;
+    if (!fleetDriversList || fleetDriversList.length === 0) return;
+
+    // If geofence radius or center changes, reset baseline to prevent false transition toasts
+    if (prevGeofenceParams.current.radiusKm !== radiusKm || prevGeofenceParams.current.centerName !== geofenceCenter?.name) {
+      prevGeofenceParams.current = { radiusKm, centerName: geofenceCenter?.name };
+      driverProximityState.current.clear();
     }
 
-    // Evaluate proximity transitions on every live telemetry update or radius change
+    // Evaluate proximity transitions on every live telemetry update
     fleetDriversList.forEach(driver => {
       if (!driver.lat || !driver.lng || (driver.lat === 0 && driver.lng === 0)) return;
 
@@ -71,10 +66,16 @@ function ManagerMapContent() {
       if (dist == null) return;
 
       const isInsideNow = dist <= radiusKm;
-      const wasInside = driverProximityState.current.get(driver.id) || false;
+      const wasInside = driverProximityState.current.get(driver.id);
 
-      // Transition: Outside ➔ Inside
-      if (isInsideNow && !wasInside) {
+      // Baseline registration: on first seeing this driver, record current state without firing false entry toast
+      if (wasInside === undefined) {
+        driverProximityState.current.set(driver.id, isInsideNow);
+        return;
+      }
+
+      // Transition: Outside ➔ Inside (only fire when driver was confirmed outside in previous check)
+      if (isInsideNow && wasInside === false) {
         driverProximityState.current.set(driver.id, true);
         addToast({
           type: 'entry',
@@ -84,7 +85,7 @@ function ManagerMapContent() {
         });
       }
       // Transition: Inside ➔ Outside (re-enables alert when driver re-enters later)
-      else if (!isInsideNow && wasInside) {
+      else if (!isInsideNow && wasInside === true) {
         driverProximityState.current.set(driver.id, false);
       }
     });
