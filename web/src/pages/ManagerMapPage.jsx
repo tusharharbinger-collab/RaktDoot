@@ -6,6 +6,7 @@ import DriverDetailsDrawer from '../components/manager/DriverDetailsDrawer';
 import DestinationModal from '../components/manager/DestinationModal';
 import AssignDriverModal from '../components/manager/AssignDriverModal';
 import CreateCollectionRequestModal from '../components/manager/CreateCollectionRequestModal';
+import GeofenceControlPanel, { getHaversineDistanceKm } from '../components/manager/GeofenceControlPanel';
 import { useToast } from '../components/common/ToastContainer';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
