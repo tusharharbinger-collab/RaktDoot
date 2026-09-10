@@ -29,8 +29,8 @@ export default function CreateCollectionRequestModal({
   const [sourceLat, setSourceLat] = useState(18.5039);
   const [sourceLng, setSourceLng] = useState(73.8524);
   const [urgency, setUrgency] = useState('normal'); // normal, urgent, emergency
-  const [category, setCategory] = useState('red_blood_cell');
-  const [unitCount, setUnitCount] = useState(1);
+  // Combination bag counts by category code (e.g. { red_blood_cell: 4, cryo: 3 })
+  const [componentCounts, setComponentCounts] = useState({ red_blood_cell: 1 });
   const [categoriesList, setCategoriesList] = useState(DEFAULT_CATEGORIES);
   const [showCatManager, setShowCatManager] = useState(false);
   const [notes, setNotes] = useState('');
@@ -60,12 +60,45 @@ export default function CreateCollectionRequestModal({
       setSourceLat(18.5039);
       setSourceLng(73.8524);
       setUrgency('normal');
-      setCategory('red_blood_cell');
-      setUnitCount(1);
+      setComponentCounts({ red_blood_cell: 1 });
       setNotes('');
       loadCategories();
     }
   }, [isOpen, initialDestination, initialDriverId, destinations, loadCategories]);
+
+  const getCount = (code) => componentCounts[code] || 0;
+
+  const updateCount = (code, delta) => {
+    setComponentCounts(prev => {
+      const current = prev[code] || 0;
+      const nextVal = Math.max(0, current + delta);
+      return { ...prev, [code]: nextVal };
+    });
+  };
+
+  const totalUnits = Object.values(componentCounts).reduce((sum, count) => sum + (count || 0), 0);
+
+  const activeComponents = categoriesList
+    .map(c => ({
+      ...c,
+      count: componentCounts[c.code] || 0
+    }))
+    .filter(c => c.count > 0);
+
+  const getCompositeCategory = () => {
+    if (activeComponents.length === 0) return 'red_blood_cell';
+    if (activeComponents.length === 1) return activeComponents[0].code;
+    return activeComponents.map(c => `${c.count} ${c.name}`).join(' + ');
+  };
+
+  const getSummaryTitle = () => {
+    if (activeComponents.length === 0) return '0 Bags';
+    if (activeComponents.length === 1) {
+      const c = activeComponents[0];
+      return `${c.count} ${c.count > 1 ? 'Bags' : 'Bag'} · ${c.name}`;
+    }
+    return `${totalUnits} Bags (${activeComponents.map(c => `${c.count} ${c.name}`).join(', ')})`;
+  };
 
   if (!isOpen) return null;
 
@@ -79,10 +112,20 @@ export default function CreateCollectionRequestModal({
       setError('Please select a driver from the fleet.');
       return;
     }
+    if (totalUnits === 0) {
+      setError('Please select at least 1 blood component bag (quantity must be at least 1).');
+      return;
+    }
 
     try {
       setLoading(true);
       setError('');
+
+      const finalCategory = getCompositeCategory();
+      const orderSummaryText = activeComponents.map(c => `${c.count} ${c.name}`).join(', ');
+      const finalNotes = notes.trim()
+        ? (activeComponents.length > 1 ? `${notes.trim()} [Order Breakdown: ${orderSummaryText}]` : notes.trim())
+        : (activeComponents.length > 1 ? `Combination Order: ${orderSummaryText}` : null);
 
       const res = await api.post('/assignments', {
         destination_id: destinationId,
@@ -91,20 +134,19 @@ export default function CreateCollectionRequestModal({
         source_lat: sourceLat,
         source_lng: sourceLng,
         urgency,
-        category: category || 'red_blood_cell',
-        unit_count: parseInt(unitCount, 10) || 1,
-        notes: notes.trim() || null,
+        category: finalCategory,
+        unit_count: totalUnits,
+        notes: finalNotes,
       });
 
       if (res.data?.success) {
         await reloadDestinations();
         const dest = destinations.find(d => d.id === destinationId);
         const driver = fleetDriversList.find(d => d.id === driverId);
-        const catObj = categoriesList.find(c => c.code === category);
 
         addToast({
           type: urgency === 'emergency' ? 'urgent' : 'entry',
-          title: `${unitCount} ${unitCount > 1 ? 'Bags' : 'Bag'} ${catObj?.name || 'Blood'} Dispatched (${urgency.toUpperCase()})`,
+          title: `${getSummaryTitle()} Dispatched (${urgency.toUpperCase()})`,
           message: `Assigned to ${driver?.name || 'driver'} ➔ ${dest?.name || 'destination hospital'}. Notification sent to driver app!`,
         });
 
@@ -441,10 +483,11 @@ export default function CreateCollectionRequestModal({
               )}
             </div>
 
-            {/* Blood Category Selector (Clean, 4-in-a-row or 2x2 grid) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: 8, marginBottom: 14 }}>
+            {/* Blood Category Cards with Integrated Bag Counters for Any Combination */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: 8, marginBottom: 12 }}>
               {categoriesList.map((cat) => {
-                const isSelected = category === cat.code;
+                const count = getCount(cat.code);
+                const isSelected = count > 0;
                 let accent = '#ef4444';
                 let shortBadge = 'PRBC';
                 let CatIcon = Droplet;
@@ -471,146 +514,231 @@ export default function CreateCollectionRequestModal({
                 }
 
                 return (
-                  <button
+                  <div
                     key={cat.code || cat.id}
-                    type="button"
-                    onClick={() => setCategory(cat.code)}
                     style={{
-                      padding: '10px 10px',
+                      padding: '8px 10px',
                       borderRadius: 10,
                       border: isSelected ? `1.5px solid ${accent}` : '1px solid rgba(255, 255, 255, 0.08)',
-                      background: isSelected ? `${accent}1f` : '#131c2e',
-                      color: isSelected ? '#ffffff' : '#94a3b8',
-                      cursor: 'pointer',
+                      background: isSelected ? `${accent}16` : '#131c2e',
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
+                      flexDirection: 'column',
+                      gap: 6,
                       transition: 'all 0.15s ease',
                       boxShadow: isSelected ? `0 0 12px ${accent}25` : 'none',
                     }}
                   >
-                    <div style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 7,
-                      background: isSelected ? `${accent}33` : 'rgba(255, 255, 255, 0.05)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: accent,
-                      flexShrink: 0,
-                    }}>
-                      <CatIcon size={15} />
-                    </div>
-                    <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: isSelected ? '#ffffff' : '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {cat.name}
+                    {/* Top Row: Icon + Name + Badge */}
+                    <div
+                      onClick={() => count === 0 ? updateCount(cat.code, 1) : null}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 7,
+                        cursor: count === 0 ? 'pointer' : 'default',
+                      }}
+                      title={count === 0 ? `Click to add ${cat.name}` : cat.name}
+                    >
+                      <div style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 6,
+                        background: isSelected ? `${accent}33` : 'rgba(255, 255, 255, 0.05)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: accent,
+                        flexShrink: 0,
+                      }}>
+                        <CatIcon size={14} />
                       </div>
-                      <div style={{ fontSize: 9.5, fontWeight: 700, color: isSelected ? accent : '#64748b', letterSpacing: '0.4px', marginTop: 1 }}>
-                        {shortBadge}
+                      <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 11.5, fontWeight: 700, color: isSelected ? '#ffffff' : '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {cat.name}
+                        </div>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: isSelected ? accent : '#64748b', letterSpacing: '0.4px', marginTop: 1 }}>
+                          {shortBadge}
+                        </div>
                       </div>
                     </div>
-                  </button>
+
+                    {/* Stepper / Add button */}
+                    {count === 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => updateCount(cat.code, 1)}
+                        style={{
+                          width: '100%',
+                          padding: '4px 0',
+                          borderRadius: 6,
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px dashed rgba(255, 255, 255, 0.12)',
+                          color: '#94a3b8',
+                          fontSize: 10.5,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 3,
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <Plus size={11} />
+                        <span>Add</span>
+                      </button>
+                    ) : (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: `1px solid ${accent}40`,
+                        borderRadius: 6,
+                        padding: '2px 4px',
+                      }}>
+                        <button
+                          type="button"
+                          onClick={() => updateCount(cat.code, -1)}
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: 4,
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: 'none',
+                            color: '#cbd5e1',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          title="Reduce 1 bag"
+                        >
+                          <Minus size={10} />
+                        </button>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#ffffff', minWidth: 38, textAlign: 'center' }}>
+                          {count} {count === 1 ? 'Bag' : 'Bags'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateCount(cat.code, 1)}
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: 4,
+                            background: `${accent}25`,
+                            border: 'none',
+                            color: accent,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          title="Add 1 bag"
+                        >
+                          <Plus size={10} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
 
-            {/* Quantity Stepper & Delivery Remarks Side by Side */}
+            {/* Bottom Row: Selected Combination Summary & Delivery Instructions */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-              {/* Left: Quantity */}
+              {/* Left: Combination Details & Quick Presets */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                   <label style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
-                    Quantity (Bags / Units) *
+                    Order Combination Summary
                   </label>
                   <span style={{ fontSize: 11, color: '#38bdf8', fontWeight: 700 }}>
-                    {unitCount} {unitCount === 1 ? 'Bag' : 'Bags'}
+                    {totalUnits} {totalUnits === 1 ? 'Bag Total' : 'Bags Total'}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {/* Stepper */}
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    background: '#131c2e',
-                    border: '1px solid #1e293b',
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                  }}>
-                    <button
-                      type="button"
-                      onClick={() => setUnitCount(prev => Math.max(1, prev - 1))}
-                      style={{
-                        padding: '8px 10px',
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        border: 'none',
-                        color: '#cbd5e1',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Minus size={13} />
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={100}
-                      value={unitCount}
-                      onChange={(e) => setUnitCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                      style={{
-                        width: 38,
-                        padding: '6px 0',
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#ffffff',
-                        textAlign: 'center',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        outline: 'none',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setUnitCount(prev => Math.min(100, prev + 1))}
-                      style={{
-                        padding: '8px 10px',
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        border: 'none',
-                        color: '#cbd5e1',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Plus size={13} />
-                    </button>
+                <div style={{
+                  background: totalUnits > 0 ? 'rgba(56, 189, 248, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                  border: totalUnits > 0 ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: 8,
+                  padding: '7px 10px',
+                  marginBottom: 8,
+                }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: totalUnits > 0 ? '#ffffff' : '#f87171' }}>
+                    {activeComponents.length > 0
+                      ? activeComponents.map(c => `${c.count} ${c.name}`).join(' + ')
+                      : '⚠️ No bags selected. Click "Add" on any component above.'}
                   </div>
+                </div>
 
-                  {/* Quick preset badges */}
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {[1, 2, 4, 6, 10].map(qty => (
-                      <button
-                        key={qty}
-                        type="button"
-                        onClick={() => setUnitCount(qty)}
-                        style={{
-                          padding: '6px 8px',
-                          borderRadius: 6,
-                          background: unitCount === qty ? 'rgba(56, 189, 248, 0.2)' : '#131c2e',
-                          border: unitCount === qty ? '1px solid #38bdf8' : '1px solid #1e293b',
-                          color: unitCount === qty ? '#38bdf8' : '#94a3b8',
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          minWidth: 28,
-                        }}
-                      >
-                        {qty}
-                      </button>
-                    ))}
-                  </div>
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>PRESETS:</span>
+                  <button
+                    type="button"
+                    onClick={() => setComponentCounts({ red_blood_cell: 1 })}
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: 5,
+                      background: '#131c2e',
+                      border: '1px solid #1e293b',
+                      color: '#94a3b8',
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    1 RBC
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setComponentCounts({ red_blood_cell: 4, cryo: 3 })}
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: 5,
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                      color: '#38bdf8',
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    4 RBC + 3 Cryo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setComponentCounts({ red_blood_cell: 2, plasma: 2 })}
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: 5,
+                      background: '#131c2e',
+                      border: '1px solid #1e293b',
+                      color: '#94a3b8',
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    2 RBC + 2 Plasma
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setComponentCounts({ platelets: 2 })}
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: 5,
+                      background: '#131c2e',
+                      border: '1px solid #1e293b',
+                      color: '#94a3b8',
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    2 Platelets
+                  </button>
                 </div>
               </div>
 
@@ -663,7 +791,7 @@ export default function CreateCollectionRequestModal({
                 fontWeight: 600,
               }}>
                 <Droplet size={12} style={{ color: '#ef4444' }} />
-                <span>{unitCount} {unitCount === 1 ? 'Bag' : 'Bags'} · {categoriesList.find(c => c.code === category)?.name || 'Blood'}</span>
+                <span>{getSummaryTitle()}</span>
               </span>
               <span style={{ color: '#475569' }}>➔</span>
               <span style={{ color: '#cbd5e1', fontWeight: 600 }}>

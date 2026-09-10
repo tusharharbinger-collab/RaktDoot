@@ -593,7 +593,8 @@ export default function ManagerWorkLogsPage() {
                                 log.category === 'plasma' ? 'Plasma'
                                 : log.category === 'cryo' ? 'Cryo'
                                 : log.category === 'platelets' ? 'Platelets'
-                                : 'Red Blood Cell'
+                                : log.category === 'red_blood_cell' || log.category === 'rbc' ? 'Red Blood Cell'
+                                : log.category || 'Red Blood Cell'
                               }</span>
                             </span>
                           </div>

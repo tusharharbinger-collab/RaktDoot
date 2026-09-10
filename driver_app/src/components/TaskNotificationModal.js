@@ -175,7 +175,8 @@ export default function TaskNotificationModal({
                   assignment.category === 'plasma' ? 'Plasma (FFP)'
                   : assignment.category === 'cryo' ? 'Cryo (CRYO)'
                   : assignment.category === 'platelets' ? 'Platelets (SDP/RDP)'
-                  : 'Red Blood Cells (PRBC)'
+                  : assignment.category === 'red_blood_cell' || assignment.category === 'rbc' ? 'Red Blood Cells (PRBC)'
+                  : assignment.category || 'Blood Units'
                 }
               </Text>
             </View>
