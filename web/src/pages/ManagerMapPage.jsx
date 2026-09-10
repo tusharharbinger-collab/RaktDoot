@@ -261,15 +261,15 @@ function ManagerMapContent() {
             onCreateCollectionRequest={(driverId) => handleOpenCollectionRequest(driverId)}
           />
         </div>
-      </div>
 
-      {/* Driver details drawer */}
-      {selectedDriverId && (
-        <DriverDetailsDrawer
-          driverId={selectedDriverId}
-          onClose={() => setSelectedDriverId(null)}
-        />
-      )}
+        {/* Driver details panel (docked on the right inside the map layout) */}
+        {selectedDriverId && (
+          <DriverDetailsDrawer
+            driverId={selectedDriverId}
+            onClose={() => setSelectedDriverId(null)}
+          />
+        )}
+      </div>
 
       {/* Modals */}
       <CreateCollectionRequestModal

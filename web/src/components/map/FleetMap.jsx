@@ -444,7 +444,7 @@ export default function FleetMap({
           position: 'absolute',
           top: 14,
           left: isGeofenceOpen ? 346 : 14,
-          zIndex: 1000,
+          zIndex: 400,
           display: 'flex', alignItems: 'center', gap: 8,
           background: 'rgba(15, 23, 42, 0.92)', backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
@@ -473,7 +473,7 @@ export default function FleetMap({
 
       {/* Sleek Floating Map Controls (Top-Right) */}
       <div style={{
-        position: 'absolute', top: 14, right: 14, zIndex: 1000,
+        position: 'absolute', top: 14, right: 14, zIndex: 400,
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
         {onToggleGeofence && (

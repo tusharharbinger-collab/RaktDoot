@@ -322,8 +322,23 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DRAWER (side panel)
+   DRAWER & DETAILS PANEL
 ═══════════════════════════════════════════════════════════════ */
+.driver-details-panel {
+  width: 360px;
+  max-width: 100%;
+  flex-shrink: 0;
+  height: 100%;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  z-index: 20;
+  animation: slide-in-right var(--transition-base) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
 .drawer-overlay {
   position: fixed; inset: 0; z-index: 800;
   background: rgba(0, 0, 0, 0.5);
