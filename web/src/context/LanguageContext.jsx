@@ -125,6 +125,7 @@ const translations = {
     locationUpdates: 'Location Updates',
     memoryUsage: 'Memory Usage',
     refresh: 'Refresh',
+    refreshing: 'Refreshing...',
 
     // Settings Page
     settingsTitle: 'Settings',
@@ -275,6 +276,7 @@ const translations = {
     locationUpdates: 'स्थान अद्यतने (Location Updates)',
     memoryUsage: 'मेमरी वापर',
     refresh: 'रिफ्रेश करा',
+    refreshing: 'रिफ्रेश करत आहे...',
 
     // Settings Page
     settingsTitle: 'सेटिंग्ज (Settings)',

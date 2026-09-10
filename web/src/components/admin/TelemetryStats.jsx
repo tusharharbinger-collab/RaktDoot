@@ -37,24 +37,42 @@ export default function TelemetryStats() {
   const { t } = useLanguage();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [justRefreshed, setJustRefreshed] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [error, setError] = useState(null);
   const intervalRef = useRef(null);
 
-  const fetchStats = async () => {
+  const fetchStats = async (isManual = false) => {
+    if (isManual) setRefreshing(true);
+    setError(null);
     try {
-      const res = await api.get('/admin/telemetry');
-      setStats(res.data.data);
-      setLastUpdated(new Date());
+      const res = await api.get('/admin/telemetry', {
+        params: { _t: Date.now() },
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      if (res.data?.success) {
+        setStats(res.data.data);
+        setLastUpdated(new Date());
+        if (isManual) {
+          setJustRefreshed(true);
+          setTimeout(() => setJustRefreshed(false), 2200);
+        }
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch telemetry:', err);
+      setError(err.response?.data?.message || 'Failed to refresh telemetry data');
     } finally {
       setLoading(false);
+      if (isManual) {
+        setTimeout(() => setRefreshing(false), 500);
+      }
     }
   };
 
   useEffect(() => {
-    fetchStats();
-    intervalRef.current = setInterval(fetchStats, 10000); // auto-refresh every 10s
+    fetchStats(false);
+    intervalRef.current = setInterval(() => fetchStats(false), 10000); // auto-refresh every 10s
     return () => clearInterval(intervalRef.current);
   }, []);
 
@@ -74,20 +92,77 @@ export default function TelemetryStats() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Activity size={16} style={{ color: 'var(--color-primary)' }} />
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : ''}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Activity size={16} style={{ color: 'var(--color-primary)' }} />
+          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : ''}
+          </span>
+          {justRefreshed && (
+            <span style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--color-success)',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              padding: '2px 8px',
+              borderRadius: 12,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              animation: 'fade-in 0.3s ease',
+            }}>
+              ✓ Updated
             </span>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: connected ? 'var(--color-success)' : 'var(--color-danger)', boxShadow: connected ? '0 0 8px var(--color-success)' : 'none' }} />
-          </div>
+          )}
+          <div
+            title={connected ? 'Live WebSocket Connected' : 'Disconnected'}
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: connected ? 'var(--color-success)' : 'var(--color-danger)',
+              boxShadow: connected ? '0 0 8px var(--color-success)' : 'none',
+            }}
+          />
         </div>
-        <button id="btn-refresh-telemetry" className="btn btn-secondary btn-sm" onClick={fetchStats}>
-          <RefreshCw size={13} /> {t.refresh}
+        <button
+          id="btn-refresh-telemetry"
+          className="btn btn-secondary btn-sm"
+          onClick={() => fetchStats(true)}
+          disabled={refreshing}
+          title="Refresh telemetry"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            minWidth: 100,
+            justifyContent: 'center',
+            cursor: refreshing ? 'not-allowed' : 'pointer',
+            opacity: refreshing ? 0.8 : 1,
+          }}
+        >
+          <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+          <span>{refreshing ? t.refreshing : t.refresh}</span>
         </button>
       </div>
+
+      {error && (
+        <div style={{
+          padding: '10px 14px',
+          background: 'rgba(239, 68, 68, 0.12)',
+          border: '1px solid var(--color-danger)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--color-danger)',
+          fontSize: 13,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}>
+          <AlertTriangle size={15} />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Primary metrics */}
       <div>

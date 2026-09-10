@@ -32,6 +32,9 @@ function deleteUser(req, res, next) {
 
 function getTelemetry(req, res, next) {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     const stats = adminService.getTelemetry();
     res.json({ success: true, data: stats });
   } catch (err) { next(err); }
