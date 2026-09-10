@@ -104,6 +104,18 @@ export function SocketProvider({ children }) {
     }
   }, []);
 
+  const reloadIssues = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await api.get('/issues?limit=100');
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setIssues(res.data.data);
+      }
+    } catch (err) {
+      console.error('[Issues] Load error:', err.message);
+    }
+  }, [token]);
+
   const clearIssues = useCallback(async (status) => {
     try {
       const url = status && status !== 'all' ? `/issues/clear?status=${status}` : '/issues/clear';
@@ -235,11 +247,58 @@ export function SocketProvider({ children }) {
 
     socket.on('issue_alert', (data) => {
       const issue = data?.issue || data;
-      setIssues(prev => [issue, ...prev].slice(0, 100));
+      if (!issue) return;
+
+      setIssues(prev => {
+        const id = issue.id;
+        if (id && prev.some(i => i.id === id)) {
+          return prev.map(i => i.id === id ? { ...i, ...issue } : i);
+        }
+        return [issue, ...prev].slice(0, 100);
+      });
+
+      // Immediate high-visibility toast alert for manager
+      addToast({
+        title: `🚨 Incident Alert: ${issue.driver_name || 'Driver'}`,
+        message: `${(issue.type || 'Breakdown').replace(/_/g, ' ').toUpperCase()}: ${issue.description || 'Driver reported an issue'}`,
+        type: 'urgent',
+        duration: 9000,
+      });
+
+      // Update fleet driver status on the map immediately
+      if (issue.driver_id) {
+        setFleetDrivers(prev => {
+          if (!prev[issue.driver_id]) return prev;
+          return {
+            ...prev,
+            [issue.driver_id]: {
+              ...prev[issue.driver_id],
+              status: 'issue',
+              lastMovedTime: Date.now(),
+            },
+          };
+        });
+      }
+
+      reloadNotifications();
     });
 
     socket.on('issue_updated', ({ issue }) => {
+      if (!issue) return;
       setIssues(prev => prev.map(i => i.id === issue.id ? issue : i));
+      if (issue.status === 'resolved' && issue.driver_id) {
+        setFleetDrivers(prev => {
+          if (!prev[issue.driver_id]) return prev;
+          return {
+            ...prev,
+            [issue.driver_id]: {
+              ...prev[issue.driver_id],
+              status: 'active',
+              lastMovedTime: Date.now(),
+            },
+          };
+        });
+      }
     });
 
     socket.on('issue_deleted', ({ id }) => {
@@ -358,6 +417,7 @@ export function SocketProvider({ children }) {
       fleetDrivers,
       fleetDriversList: Object.values(fleetDrivers),
       issues, setIssues,
+      reloadIssues,
       destinations, setDestinations,
       reloadDestinations,
       notifications, setNotifications,

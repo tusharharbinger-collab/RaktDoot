@@ -189,7 +189,7 @@ function initSocket(httpServer) {
               const message = `Driver ${user.name} is within geofence of ${activeAssignment.destination_name} (${roundedDist}m away)`;
 
               const notif = createGeofenceNotification({
-                manager_id: activeAssignment.assigned_by || 'all',
+                manager_id: activeAssignment.assigned_by || 'user-mgr-001',
                 driver_id: user.id,
                 destination_id: activeAssignment.destination_id,
                 assignment_id: activeAssignment.id,
@@ -278,6 +278,32 @@ function initSocket(httpServer) {
         ...data,
         timestamp: new Date().toISOString(),
       };
+
+      try {
+        const { dbRun } = require('../db/database');
+        dbRun(
+          "UPDATE driver_locations SET status = 'issue', updated_at = datetime('now') WHERE driver_id = ?",
+          [user.id]
+        );
+      } catch (_) {}
+
+      io.emit('driver_status_changed', {
+        driver_id: user.id,
+        driver_name: user.name,
+        status: 'issue',
+        timestamp: new Date().toISOString(),
+      });
+      io.to('fleet-monitors').emit('driver_status_changed', {
+        driver_id: user.id,
+        driver_name: user.name,
+        status: 'issue',
+        timestamp: new Date().toISOString(),
+      });
+
+      io.emit('issue_alert', {
+        ...issuePayload,
+        issue: issuePayload,
+      });
       io.to('fleet-monitors').emit('issue_alert', {
         ...issuePayload,
         issue: issuePayload,
@@ -305,7 +331,7 @@ function initSocket(httpServer) {
         // ── DRIVER REJECTED REQUEST ──
         if (status === 'rejected') {
           const notif = createGeofenceNotification({
-            manager_id: updated.assigned_by || 'all',
+            manager_id: updated.assigned_by || 'user-mgr-001',
             driver_id: updated.driver_id,
             destination_id: updated.destination_id,
             assignment_id: updated.id,
@@ -355,7 +381,7 @@ function initSocket(httpServer) {
           }
 
           const notif = createGeofenceNotification({
-            manager_id: updated.assigned_by || 'all',
+            manager_id: updated.assigned_by || 'user-mgr-001',
             driver_id: updated.driver_id,
             destination_id: updated.destination_id,
             assignment_id: updated.id,

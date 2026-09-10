@@ -64,10 +64,69 @@ function createIssue(req, res, next) {
       address: address || null,
     });
 
-    // Broadcast real-time alert to manager/admin clients
+    // 1. Update driver location status to 'issue' in database
+    try {
+      const { dbRun } = require('../../db/database');
+      dbRun(
+        "UPDATE driver_locations SET status = 'issue', updated_at = datetime('now') WHERE driver_id = ?",
+        [driver_id]
+      );
+    } catch (_) {}
+
+    // 2. Broadcast driver status change to fleet
     try {
       const io = getIO();
-      io.to('fleet-monitors').emit('issue_alert', { issue });
+      io.emit('driver_status_changed', {
+        driver_id,
+        driver_name: issue.driver_name || req.user.name,
+        status: 'issue',
+        timestamp: new Date().toISOString(),
+      });
+      io.to('fleet-monitors').emit('driver_status_changed', {
+        driver_id,
+        driver_name: issue.driver_name || req.user.name,
+        status: 'issue',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (_) {}
+
+    // 3. Create persistent system notification for manager
+    try {
+      const notificationsService = require('../notifications/notifications.service');
+      let destId = 'dest-home-001';
+      let managerId = 'user-mgr-001';
+      try {
+        const { getActiveAssignmentForDriver } = require('../assignments/assignments.service');
+        const active = getActiveAssignmentForDriver(driver_id);
+        if (active) {
+          if (active.destination_id) destId = active.destination_id;
+          if (active.assigned_by) managerId = active.assigned_by;
+        }
+      } catch (_) {}
+
+      const notif = notificationsService.createGeofenceNotification({
+        manager_id: managerId,
+        driver_id,
+        destination_id: destId,
+        assignment_id: null,
+        type: 'issue_reported',
+        message: `🚨 INCIDENT REPORTED: Driver ${issue.driver_name || req.user.name} reported ${(issue.type || 'Breakdown').replace(/_/g, ' ').toUpperCase()} (${(issue.severity || 'medium').toUpperCase()}): ${issue.description || 'Driver reported an urgent issue'}`,
+        distance_m: 0,
+      });
+
+      const io = getIO();
+      io.emit('notification_new', { notification: notif });
+      io.to('fleet-monitors').emit('notification_new', { notification: notif });
+    } catch (notifErr) {
+      console.warn('[Issue Notification] Error:', notifErr.message);
+    }
+
+    // 4. Broadcast real-time issue_alert to all connected monitors
+    try {
+      const io = getIO();
+      const payload = { issue, ...issue };
+      io.emit('issue_alert', payload);
+      io.to('fleet-monitors').emit('issue_alert', payload);
     } catch (_) { /* Socket may not be ready in tests */ }
 
     res.status(201).json({ success: true, data: issue });
@@ -87,6 +146,7 @@ function updateIssueStatus(req, res, next) {
     // Broadcast resolution
     try {
       const io = getIO();
+      io.emit('issue_updated', { issue });
       io.to('fleet-monitors').emit('issue_updated', { issue });
     } catch (_) { /* ok */ }
 
@@ -102,6 +162,7 @@ function deleteIssue(req, res, next) {
 
     try {
       const io = getIO();
+      io.emit('issue_deleted', { id: req.params.id });
       io.to('fleet-monitors').emit('issue_deleted', { id: req.params.id });
     } catch (_) { /* ok */ }
 
@@ -118,6 +179,7 @@ function clearIssues(req, res, next) {
 
     try {
       const io = getIO();
+      io.emit('issues_cleared', { status });
       io.to('fleet-monitors').emit('issues_cleared', { status });
     } catch (_) { /* ok */ }
 

@@ -128,7 +128,7 @@ function updateAssignmentStatus(req, res, next) {
       // ── DRIVER REJECTED REQUEST: NOTIFY MANAGER ──
       if (status === 'rejected') {
         const notif = notificationsService.createGeofenceNotification({
-          manager_id: assignment.assigned_by || 'all',
+          manager_id: assignment.assigned_by || 'user-mgr-001',
           driver_id: assignment.driver_id,
           destination_id: assignment.destination_id,
           assignment_id: assignment.id,
@@ -173,7 +173,7 @@ function updateAssignmentStatus(req, res, next) {
         });
 
         const notif = notificationsService.createGeofenceNotification({
-          manager_id: assignment.assigned_by || 'all',
+          manager_id: assignment.assigned_by || 'user-mgr-001',
           driver_id: assignment.driver_id,
           destination_id: assignment.destination_id,
           assignment_id: assignment.id,

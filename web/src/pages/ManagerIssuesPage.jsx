@@ -1,23 +1,33 @@
-import { useEffect } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import IssueFeed from '../components/manager/IssueFeed';
 import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageToggle from '../components/common/LanguageToggle';
-import api from '../services/api';
-
 import harbingerLogo from '../assets/harbinger_logo_actual.png';
 
 export default function ManagerIssuesPage() {
-  const { setIssues } = useSocket();
+  const { reloadIssues } = useSocket();
   const { t } = useLanguage();
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Load historical issues on mount
+  // Sync issues on mount and poll every 10 seconds as safety net
   useEffect(() => {
-    api.get('/issues?limit=100')
-      .then(r => setIssues(r.data.data))
-      .catch(console.error);
-  }, [setIssues]);
+    reloadIssues?.();
+    const interval = setInterval(() => {
+      reloadIssues?.();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [reloadIssues]);
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await reloadIssues?.();
+    } finally {
+      setTimeout(() => setRefreshing(false), 400);
+    }
+  };
 
   return (
     <div className="page-content-full">
@@ -57,6 +67,16 @@ export default function ManagerIssuesPage() {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
+            title="Refresh issues feed"
+          >
+            <RefreshCw size={13} className={refreshing ? 'spin' : ''} />
+            <span>Refresh</span>
+          </button>
           <LanguageToggle />
           <div style={{ height: 26, width: 1, background: 'var(--border-default)' }} />
           <img

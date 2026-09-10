@@ -35,7 +35,7 @@ function getNotificationById(id) {
       d.name AS destination_name, d.address AS destination_address
     FROM geofence_notifications n
     JOIN users u ON u.id = n.driver_id
-    JOIN destinations d ON d.id = n.destination_id
+    LEFT JOIN destinations d ON d.id = n.destination_id
     WHERE n.id = ?
   `, [id]);
 }
@@ -52,7 +52,7 @@ function getNotifications(manager_id, { unread_only = false, limit = 50 } = {}) 
       d.name AS destination_name, d.address AS destination_address
     FROM geofence_notifications n
     JOIN users u ON u.id = n.driver_id
-    JOIN destinations d ON d.id = n.destination_id
+    LEFT JOIN destinations d ON d.id = n.destination_id
     WHERE (n.manager_id = ? OR n.manager_id = 'all')
   `;
   const params = [manager_id];
