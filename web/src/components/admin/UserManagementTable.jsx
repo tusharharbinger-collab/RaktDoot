@@ -13,6 +13,8 @@ function UserFormModal({ user, onClose, onSave }) {
     email: user?.email || '',
     phone: user?.phone || '',
     role: user?.role || 'driver',
+    vehicle_type: user?.vehicle_type || 'two_wheeler',
+    vehicle_number: user?.vehicle_number || '',
     password: '',
     is_active: user?.is_active !== 0,
   });
@@ -30,7 +32,15 @@ function UserFormModal({ user, onClose, onSave }) {
     }
     setLoading(true); setError('');
     try {
-      const payload = { name: form.name, email: form.email, phone: form.phone, role: form.role, is_active: form.is_active };
+      const payload = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        role: form.role,
+        is_active: form.is_active,
+        vehicle_type: form.vehicle_type,
+        vehicle_number: form.vehicle_number ? form.vehicle_number.trim().toUpperCase() : null,
+      };
       if (form.password) payload.password = form.password;
       if (isEditing) {
         const res = await api.put(`/admin/users/${user.id}`, payload);
@@ -76,6 +86,29 @@ function UserFormModal({ user, onClose, onSave }) {
               </select>
             </div>
           </div>
+
+          {form.role === 'driver' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', padding: '12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+              <div className="form-group">
+                <label className="form-label">Vehicle Type</label>
+                <select id="user-vehicle-type" className="select" value={form.vehicle_type} onChange={e => set('vehicle_type', e.target.value)}>
+                  <option value="two_wheeler">🛵 Two Wheeler (Bike / Scooter)</option>
+                  <option value="four_wheeler">🚐 Four Wheeler (Van / Car)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Vehicle Reg. Number</label>
+                <input
+                  id="user-vehicle-number"
+                  className="input"
+                  style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}
+                  value={form.vehicle_number}
+                  onChange={e => set('vehicle_number', e.target.value.toUpperCase())}
+                  placeholder="MH 12 AB 1234"
+                />
+              </div>
+            </div>
+          )}
           <div className="form-group">
             <label className="form-label">{isEditing ? 'New Password (leave blank to keep)' : 'Password *'}</label>
             <div style={{ position: 'relative' }}>
@@ -216,6 +249,7 @@ export default function UserManagementTable() {
                 <th>User</th>
                 <th>Role</th>
                 <th>Phone</th>
+                <th>Vehicle Profile</th>
                 <th>Status</th>
                 <th>Last Active</th>
                 <th>Actions</th>
@@ -237,6 +271,38 @@ export default function UserManagementTable() {
                     </td>
                     <td><span className={`badge ${ROLE_COLORS[u.role]}`}>{u.role}</span></td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{u.phone || '—'}</td>
+                    <td>
+                      {u.role === 'driver' ? (
+                        u.vehicle_number ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: u.vehicle_type === 'four_wheeler' ? '#38bdf8' : '#34d399',
+                              background: u.vehicle_type === 'four_wheeler' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(52, 211, 153, 0.12)',
+                              border: `1px solid ${u.vehicle_type === 'four_wheeler' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(52, 211, 153, 0.3)'}`,
+                              padding: '2px 8px',
+                              borderRadius: 6,
+                              width: 'fit-content',
+                            }}>
+                              {u.vehicle_type === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'}
+                            </span>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: 0.5 }}>
+                              {u.vehicle_number}
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: 11, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 6px', borderRadius: 4, border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                            ⚠️ Not configured
+                          </span>
+                        )
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>—</span>
+                      )}
+                    </td>
                     <td>
                       <span className={`badge ${u.is_active ? 'badge-active' : 'badge-offline'}`}>
                         {u.is_active ? 'Active' : 'Inactive'}

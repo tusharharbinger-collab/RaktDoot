@@ -8,7 +8,7 @@ const SALT_ROUNDS = 10;
 
 function listUsers({ role, search, page = 1, limit = 20 } = {}) {
   let sql = `
-    SELECT u.id, u.name, u.email, u.role, u.phone, u.avatar_color, u.is_active, u.created_at,
+    SELECT u.id, u.name, u.email, u.role, u.phone, u.avatar_color, u.vehicle_type, u.vehicle_number, u.is_active, u.created_at,
            dl.status AS location_status, dl.updated_at AS last_seen
     FROM users u
     LEFT JOIN driver_locations dl ON dl.driver_id = u.id
@@ -18,9 +18,9 @@ function listUsers({ role, search, page = 1, limit = 20 } = {}) {
 
   if (role) { sql += ' AND u.role = ?'; params.push(role); }
   if (search) {
-    sql += ' AND (u.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?)';
+    sql += ' AND (u.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR u.vehicle_number LIKE ?)';
     const q = `%${search}%`;
-    params.push(q, q, q);
+    params.push(q, q, q, q);
   }
 
   const countResult = dbGet(`SELECT COUNT(*) as total FROM (${sql})`, params);
@@ -34,7 +34,7 @@ function listUsers({ role, search, page = 1, limit = 20 } = {}) {
   return { users, total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) };
 }
 
-async function createUser({ name, email, password, role, phone }) {
+async function createUser({ name, email, password, role, phone, vehicle_type, vehicle_number }) {
   if (!name || !email || !password || !role) {
     const err = new Error('name, email, password, and role are required.');
     err.status = 400;
@@ -52,16 +52,27 @@ async function createUser({ name, email, password, role, phone }) {
   const avatar_color = colors[Math.floor(Math.random() * colors.length)];
 
   dbRun(
-    `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, name, email, hash, role, phone || null, avatar_color]
+    `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color, vehicle_type, vehicle_number)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      name,
+      email,
+      hash,
+      role,
+      phone || null,
+      avatar_color,
+      vehicle_type || 'two_wheeler',
+      vehicle_number ? vehicle_number.trim().toUpperCase() : null,
+    ]
   );
   if (role === 'driver') {
     dbRun(`INSERT OR IGNORE INTO driver_locations (driver_id, lat, lng, speed, heading, status) VALUES (?, 0, 0, 0, 0, 'offline')`, [id]);
   }
-  return dbGet('SELECT id, name, email, role, phone, avatar_color, is_active, created_at FROM users WHERE id = ?', [id]);
+  return dbGet('SELECT id, name, email, role, phone, avatar_color, vehicle_type, vehicle_number, is_active, created_at FROM users WHERE id = ?', [id]);
 }
 
-async function updateUser(userId, { name, email, phone, role, is_active, password }) {
+async function updateUser(userId, { name, email, phone, role, is_active, password, vehicle_type, vehicle_number }) {
   const user = dbGet('SELECT * FROM users WHERE id = ?', [userId]);
   if (!user) {
     const err = new Error('User not found.'); err.status = 404; throw err;
@@ -76,6 +87,11 @@ async function updateUser(userId, { name, email, phone, role, is_active, passwor
   if (email !== undefined) { updates.push('email = ?'); params.push(email); }
   if (phone !== undefined) { updates.push('phone = ?'); params.push(phone); }
   if (role !== undefined) { updates.push('role = ?'); params.push(role); }
+  if (vehicle_type !== undefined) { updates.push('vehicle_type = ?'); params.push(vehicle_type); }
+  if (vehicle_number !== undefined) {
+    updates.push('vehicle_number = ?');
+    params.push(vehicle_number ? vehicle_number.trim().toUpperCase() : null);
+  }
   if (is_active !== undefined) { updates.push('is_active = ?'); params.push(is_active ? 1 : 0); }
   if (password) {
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -84,7 +100,7 @@ async function updateUser(userId, { name, email, phone, role, is_active, passwor
   if (updates.length === 0) { const err = new Error('No fields to update.'); err.status = 400; throw err; }
   params.push(userId);
   dbRun(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
-  return dbGet('SELECT id, name, email, role, phone, avatar_color, is_active, created_at FROM users WHERE id = ?', [userId]);
+  return dbGet('SELECT id, name, email, role, phone, avatar_color, vehicle_type, vehicle_number, is_active, created_at FROM users WHERE id = ?', [userId]);
 }
 
 function deleteUser(userId, requesterId) {

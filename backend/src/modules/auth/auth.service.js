@@ -18,7 +18,7 @@ function sanitizeUser(user) {
   return safe;
 }
 
-async function register({ name, email, password, role = 'driver', phone }) {
+async function register({ name, email, password, role = 'driver', phone, vehicle_type = 'two_wheeler', vehicle_number = null }) {
   const existing = dbGet('SELECT id FROM users WHERE email = ?', [email]);
   if (existing) {
     const err = new Error('Email already registered.');
@@ -32,9 +32,19 @@ async function register({ name, email, password, role = 'driver', phone }) {
   const avatar_color = colors[Math.floor(Math.random() * colors.length)];
 
   dbRun(
-    `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, name, email, hash, role, phone || null, avatar_color]
+    `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color, vehicle_type, vehicle_number)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      name,
+      email,
+      hash,
+      role,
+      phone || null,
+      avatar_color,
+      vehicle_type || 'two_wheeler',
+      vehicle_number ? vehicle_number.trim().toUpperCase() : null,
+    ]
   );
 
   // If registering as driver, create default location row
@@ -78,7 +88,7 @@ async function login({ email, password }) {
 }
 
 function getMe(userId) {
-  const user = dbGet('SELECT id, name, email, role, phone, avatar_color, is_active, created_at FROM users WHERE id = ?', [userId]);
+  const user = dbGet('SELECT id, name, email, role, phone, avatar_color, vehicle_type, vehicle_number, is_active, created_at FROM users WHERE id = ?', [userId]);
   if (!user) {
     const err = new Error('User not found.');
     err.status = 404;

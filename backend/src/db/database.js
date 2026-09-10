@@ -42,6 +42,8 @@ function initDB() {
   try { db.run('ALTER TABLE driver_assignments ADD COLUMN urgency TEXT DEFAULT "normal"'); } catch (_) {}
   try { db.run('ALTER TABLE driver_assignments ADD COLUMN notes TEXT'); } catch (_) {}
   try { db.run('ALTER TABLE users ADD COLUMN push_token TEXT'); } catch (_) {}
+  try { db.run('ALTER TABLE users ADD COLUMN vehicle_type TEXT DEFAULT "two_wheeler"'); } catch (_) {}
+  try { db.run('ALTER TABLE users ADD COLUMN vehicle_number TEXT'); } catch (_) {}
   try { db.run('ALTER TABLE geofence_notifications ADD COLUMN distance_m REAL'); } catch (_) {}
 
   // Work Logs Table for completed delivery & collection task records

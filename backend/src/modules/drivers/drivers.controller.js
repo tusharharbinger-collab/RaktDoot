@@ -46,4 +46,49 @@ function registerPushToken(req, res, next) {
   }
 }
 
-module.exports = { getAllDrivers, getDriverById, updateStatus, registerPushToken };
+function updateProfile(req, res, next) {
+  try {
+    const targetDriverId = (req.user.role === 'admin' || req.user.role === 'manager') && req.body.driver_id
+      ? req.body.driver_id
+      : req.user.id;
+
+    const { vehicle_type, vehicle_number, phone, name } = req.body;
+    const updated = driversService.updateDriverProfile(targetDriverId, {
+      vehicle_type,
+      vehicle_number,
+      phone,
+      name,
+    });
+
+    // Broadcast to web monitors via Socket.io
+    try {
+      const { getIO } = require('../../sockets/socket.handler');
+      const io = getIO();
+      if (io) {
+        io.to('fleet-monitors').emit('driver_profile_updated', {
+          driver_id: updated.id,
+          driver_name: updated.name,
+          phone: updated.phone,
+          vehicle_type: updated.vehicle_type,
+          vehicle_number: updated.vehicle_number,
+          avatar_color: updated.avatar_color,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch (sockErr) {
+      console.warn('[Driver Controller] Socket broadcast warning:', sockErr.message);
+    }
+
+    res.json({ success: true, data: updated, message: 'Driver profile updated successfully.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getAllDrivers,
+  getDriverById,
+  updateStatus,
+  registerPushToken,
+  updateProfile,
+};

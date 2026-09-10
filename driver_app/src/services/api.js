@@ -60,12 +60,20 @@ export async function loginDriver(serverUrl, email, password) {
   return data.data; // { token, user }
 }
 
-export async function registerDriver(serverUrl, { name, email, password, phone }) {
+export async function registerDriver(serverUrl, { name, email, password, phone, vehicle_type, vehicle_number }) {
   const url = `${serverUrl.replace(/\/+$/, '')}/api/auth/register`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password, phone, role: 'driver' }),
+    body: JSON.stringify({
+      name,
+      email,
+      password,
+      phone,
+      role: 'driver',
+      vehicle_type: vehicle_type || 'two_wheeler',
+      vehicle_number: vehicle_number || null,
+    }),
   });
 
   const data = await response.json();
@@ -76,6 +84,24 @@ export async function registerDriver(serverUrl, { name, email, password, phone }
   return data.data; // { token, user }
 }
 
+export async function updateDriverProfile(serverUrl, token, profileData) {
+  const url = `${serverUrl.replace(/\/+$/, '')}/api/drivers/profile`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to update vehicle profile');
+  }
+
+  return data.data;
+}
 
 export async function getDriverProfile(serverUrl, token, driverId) {
   const url = `${serverUrl.replace(/\/+$/, '')}/api/drivers/${driverId}`;

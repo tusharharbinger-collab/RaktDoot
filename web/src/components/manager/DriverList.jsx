@@ -95,6 +95,19 @@ function DriverItem({ driver, selected, onClick }) {
             {driver.status || 'offline'}
           </span>
 
+          {driver.vehicle_number && (
+            <>
+              <span style={{ opacity: 0.5 }}>·</span>
+              <span style={{
+                color: driver.vehicle_type === 'four_wheeler' ? '#38bdf8' : '#34d399',
+                fontWeight: 700,
+                fontSize: 10.5,
+              }}>
+                {driver.vehicle_type === 'four_wheeler' ? '🚐' : '🛵'} {driver.vehicle_number}
+              </span>
+            </>
+          )}
+
           {driver.speed > 0 ? (
             <>
               <span style={{ opacity: 0.5 }}>·</span>

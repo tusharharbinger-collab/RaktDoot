@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, MapPin, Phone, Clock, Navigation, Gauge, AlertTriangle, Activity } from 'lucide-react';
+import { X, MapPin, Phone, Clock, Navigation, Gauge, AlertTriangle, Activity, Truck } from 'lucide-react';
 import api from '../../services/api';
 import { useSocket } from '../../context/SocketContext';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -49,11 +49,24 @@ export default function DriverDetailsDrawer({ driverId, onClose }) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{d.name}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
               <span className={`badge badge-${d.status || 'offline'}`}>
                 <span className="badge-dot pulse" />
                 {d.status || 'offline'}
               </span>
+              {(d.vehicle_number || detail?.vehicle_number) && (
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: (d.vehicle_type || detail?.vehicle_type) === 'four_wheeler' ? '#38bdf8' : '#34d399',
+                  background: (d.vehicle_type || detail?.vehicle_type) === 'four_wheeler' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                  border: `1px solid ${(d.vehicle_type || detail?.vehicle_type) === 'four_wheeler' ? 'rgba(56, 189, 248, 0.35)' : 'rgba(52, 211, 153, 0.35)'}`,
+                  padding: '2px 8px',
+                  borderRadius: 6,
+                }}>
+                  {(d.vehicle_type || detail?.vehicle_type) === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'} · {d.vehicle_number || detail?.vehicle_number}
+                </span>
+              )}
             </div>
           </div>
           <button id="btn-close-drawer" className="btn btn-ghost btn-icon" onClick={onClose}><X size={16} /></button>
@@ -89,6 +102,22 @@ export default function DriverDetailsDrawer({ driverId, onClose }) {
             <div style={{ padding: 'var(--space-5)', borderBottom: '1px solid var(--border-default)' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--space-2)' }}>Driver Info</div>
               <InfoRow icon={MapPin} label="Location" value={getDisplayAddress(d)} />
+              <InfoRow
+                icon={Truck}
+                label="Vehicle"
+                value={
+                  (d.vehicle_number || detail?.vehicle_number) ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span>{(d.vehicle_type || detail?.vehicle_type) === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'}</span>
+                      <span style={{ color: '#38bdf8', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                        {d.vehicle_number || detail?.vehicle_number}
+                      </span>
+                    </span>
+                  ) : (
+                    <span style={{ color: 'var(--text-muted)' }}>Not configured</span>
+                  )
+                }
+              />
               {d.phone && <InfoRow icon={Phone} label="Phone" value={d.phone} />}
               <InfoRow icon={Clock} label="Last Seen" value={d.updated_at ? formatDistanceToNow(new Date(d.updated_at), { addSuffix: true }) : 'Unknown'} />
               {detail?.created_at && <InfoRow icon={Activity} label="Joined" value={format(new Date(detail.created_at), 'dd MMM yyyy')} />}

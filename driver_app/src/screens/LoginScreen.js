@@ -29,6 +29,9 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [rgName,     setRgName]     = useState('');
   const [rgEmail,    setRgEmail]    = useState('');
   const [rgPhone,    setRgPhone]    = useState('');
+  const [rgVehicleType, setRgVehicleType] = useState('two_wheeler');
+  const [rgVehicleNumber, setRgVehicleNumber] = useState('');
+  const [rgVehicleFocused, setRgVehicleFocused] = useState(false);
   const [rgPassword, setRgPassword] = useState('');
   const [rgConfirm,  setRgConfirm]  = useState('');
   const [rgShowPass,    setRgShowPass]    = useState(false);
@@ -117,14 +120,26 @@ export default function LoginScreen({ onLoginSuccess }) {
       Alert.alert('Passwords Mismatch', 'Password and confirm password do not match.');
       return;
     }
+    const vehicleNumber = rgVehicleNumber.trim().toUpperCase();
+    if (!vehicleNumber) {
+      Alert.alert('Vehicle Required', 'Please enter your vehicle registration number (e.g. MH 12 AB 1234).');
+      return;
+    }
     try {
       setLoading(true);
       await storeServerUrl(serverUrl);
-      const authData = await registerDriver(serverUrl, { name, email, password: rgPassword, phone });
+      const authData = await registerDriver(serverUrl, {
+        name,
+        email,
+        password: rgPassword,
+        phone,
+        vehicle_type: rgVehicleType,
+        vehicle_number: vehicleNumber,
+      });
       await storeAuth(authData);
       Alert.alert(
         'Account Created!',
-        `Welcome, ${authData.user.name}! Your driver account has been created successfully.`,
+        `Welcome, ${authData.user.name}! Your driver account has been created successfully with ${rgVehicleType === 'four_wheeler' ? 'Four Wheeler' : 'Two Wheeler'} (${vehicleNumber}).`,
         [{ text: 'Continue', onPress: () => onLoginSuccess(authData, serverUrl) }]
       );
     } catch (err) {
@@ -277,6 +292,49 @@ export default function LoginScreen({ onLoginSuccess }) {
                     onFocus={() => setRgPhoneFocused(true)} onBlur={() => setRgPhoneFocused(false)} />
                 </View>
 
+                <Text style={s.label}>VEHICLE TYPE *</Text>
+                <View style={s.vehicleTypeRow}>
+                  <TouchableOpacity
+                    style={[s.vehicleTypeBtn, rgVehicleType === 'two_wheeler' && s.vehicleTypeBtnActive]}
+                    onPress={() => setRgVehicleType('two_wheeler')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={s.vehicleTypeIcon}>🛵</Text>
+                    <Text style={[s.vehicleTypeLabel, rgVehicleType === 'two_wheeler' && s.vehicleTypeLabelActive]}>
+                      Two Wheeler
+                    </Text>
+                    <Text style={s.vehicleTypeSub}>Bike / Scooter</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[s.vehicleTypeBtn, rgVehicleType === 'four_wheeler' && s.vehicleTypeBtnActive]}
+                    onPress={() => setRgVehicleType('four_wheeler')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={s.vehicleTypeIcon}>🚐</Text>
+                    <Text style={[s.vehicleTypeLabel, rgVehicleType === 'four_wheeler' && s.vehicleTypeLabelActive]}>
+                      Four Wheeler
+                    </Text>
+                    <Text style={s.vehicleTypeSub}>Van / Car</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={s.label}>VEHICLE REGISTRATION NUMBER *</Text>
+                <View style={[s.inputRow, rgVehicleFocused && s.inputRowFocused]}>
+                  <Text style={s.inputIcon}>🔢</Text>
+                  <TextInput
+                    style={[s.input, { fontWeight: '700', letterSpacing: 1 }]}
+                    placeholder="MH 12 AB 1234"
+                    placeholderTextColor="#94a3b8"
+                    value={rgVehicleNumber}
+                    onChangeText={setRgVehicleNumber}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    onFocus={() => setRgVehicleFocused(true)}
+                    onBlur={() => setRgVehicleFocused(false)}
+                  />
+                </View>
+
                 <Text style={s.label}>PASSWORD *</Text>
                 <View style={[s.inputRow, rgPassFocused && s.inputRowFocused]}>
                   <Text style={s.inputIcon}>🔒</Text>
@@ -382,6 +440,13 @@ const s = StyleSheet.create({
   cardTitle: { fontSize: 20, fontWeight: '800', color: '#ffffff', textAlign: 'center', marginBottom: 4 },
   cardSub: { fontSize: 12, color: '#ffffff', textAlign: 'center', marginBottom: 18, lineHeight: 17 },
   label: { fontSize: 11, fontWeight: '700', color: '#ffffff', letterSpacing: 0.9, marginBottom: 7, textTransform: 'uppercase' },
+  vehicleTypeRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  vehicleTypeBtn: { flex: 1, backgroundColor: '#090a11', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center' },
+  vehicleTypeBtnActive: { borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.12)' },
+  vehicleTypeIcon: { fontSize: 24, marginBottom: 4 },
+  vehicleTypeLabel: { fontSize: 12.5, fontWeight: '700', color: '#94a3b8' },
+  vehicleTypeLabelActive: { color: '#ffffff', fontWeight: '800' },
+  vehicleTypeSub: { fontSize: 10, color: '#64748b', marginTop: 2 },
   inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#090a11', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', borderRadius: 11, paddingHorizontal: 12, marginBottom: 14, minHeight: 48 },
   inputRowFocused: { borderColor: 'rgba(220,38,38,0.5)', shadowColor: '#DC2626', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
   inputRowError: { borderColor: 'rgba(251,113,133,0.6)' },

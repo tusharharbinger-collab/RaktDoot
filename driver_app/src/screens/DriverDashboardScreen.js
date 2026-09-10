@@ -13,6 +13,7 @@ import ReportIssueModal from '../components/ReportIssueModal';
 import IssuesHistoryModal from '../components/IssuesHistoryModal';
 import TaskNotificationModal from '../components/TaskNotificationModal';
 import RouteMappingModal from '../components/RouteMappingModal';
+import VehicleProfileModal from '../components/VehicleProfileModal';
 
 const omDropImg = require('../../assets/om_blood_drop_logo.jpg');
 const nabhBadgeImg = require('../../assets/nabh_badge_logo.jpg');
@@ -122,6 +123,23 @@ export default function DriverDashboardScreen({
   const [showReportModal, setShowReportModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [issuesHistory, setIssuesHistory] = useState([]);
+  const [currentUser, setCurrentUser] = useState(user);
+  const [showVehicleModal, setShowVehicleModal] = useState(false);
+
+  // Sync user prop if updated from outside
+  useEffect(() => {
+    if (user) setCurrentUser(user);
+  }, [user]);
+
+  // Prompt vehicle profile setup if driver has no vehicle registered
+  useEffect(() => {
+    if (currentUser && !currentUser.vehicle_number) {
+      const timer = setTimeout(() => {
+        setShowVehicleModal(true);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser?.vehicle_number]);
 
   // Assignment & Task states
   const [activeAssignment, setActiveAssignment] = useState(null);
@@ -502,17 +520,33 @@ export default function DriverDashboardScreen({
 
       {/* 2. Driver Profile & Live Connection Status Bar */}
       <View style={styles.driverSubBar}>
-        <View style={styles.driverProfile}>
-          <View style={[styles.avatar, { backgroundColor: user?.avatar_color || '#dc2626' }]}>
+        <View style={[styles.driverProfile, { flex: 1, marginRight: 8 }]}>
+          <View style={[styles.avatar, { backgroundColor: currentUser?.avatar_color || user?.avatar_color || '#dc2626' }]}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
-          <View>
-            <Text style={styles.driverName}>{user?.name || 'Delivery Driver'}</Text>
-            <View style={styles.socketIndicator}>
-              <View style={[styles.dot, { backgroundColor: socketConnected ? '#10b981' : '#ef4444' }]} />
-              <Text style={styles.socketText}>
-                {socketConnected ? t.connected : t.reconnecting}
-              </Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.driverName} numberOfLines={1}>{currentUser?.name || user?.name || 'Delivery Driver'}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
+              <View style={styles.socketIndicator}>
+                <View style={[styles.dot, { backgroundColor: socketConnected ? '#10b981' : '#ef4444' }]} />
+                <Text style={styles.socketText}>
+                  {socketConnected ? t.connected : t.reconnecting}
+                </Text>
+              </View>
+
+              {/* Vehicle profile badge */}
+              <TouchableOpacity
+                style={[styles.vehiclePill, !currentUser?.vehicle_number && styles.vehiclePillMissing]}
+                onPress={() => setShowVehicleModal(true)}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.vehiclePillText, !currentUser?.vehicle_number && styles.vehiclePillTextMissing]}>
+                  {currentUser?.vehicle_number
+                    ? `${currentUser?.vehicle_type === 'four_wheeler' ? '🚐' : '🛵'} ${currentUser.vehicle_number}`
+                    : '⚠️ Set Vehicle'}
+                </Text>
+                <Text style={styles.vehiclePillEdit}>✏️</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -970,6 +1004,19 @@ export default function DriverDashboardScreen({
         destination={activeAssignment}
         homeLocation={homeLocation}
         remainingDistanceKm={distToDest}
+      />
+
+      {/* Driver Vehicle Profile Modal */}
+      <VehicleProfileModal
+        visible={showVehicleModal}
+        onClose={() => setShowVehicleModal(false)}
+        user={currentUser}
+        serverUrl={serverUrl}
+        token={token}
+        lang={lang}
+        onSaveSuccess={(updated) => {
+          setCurrentUser(prev => ({ ...prev, ...updated }));
+        }}
       />
     </View>
   );
@@ -1533,6 +1580,34 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 10.5,
     fontWeight: '500',
+  },
+  vehiclePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  vehiclePillMissing: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderColor: 'rgba(245, 158, 11, 0.45)',
+  },
+  vehiclePillText: {
+    color: '#f8fafc',
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  vehiclePillTextMissing: {
+    color: '#fde68a',
+  },
+  vehiclePillEdit: {
+    fontSize: 9.5,
+    opacity: 0.8,
   },
   statusPill: {
     flexDirection: 'row',

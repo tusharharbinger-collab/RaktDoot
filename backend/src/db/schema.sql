@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   phone       TEXT,
   avatar_color TEXT DEFAULT '#6366f1',
   push_token  TEXT,
+  vehicle_type TEXT DEFAULT 'two_wheeler',
+  vehicle_number TEXT,
   is_active   INTEGER NOT NULL DEFAULT 1,
   created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );

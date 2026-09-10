@@ -38,6 +38,8 @@ const users = [
     role: 'driver',
     phone: '+91-9000000011',
     avatar_color: '#06b6d4',
+    vehicle_type: 'two_wheeler',
+    vehicle_number: 'MH 12 AB 1234',
   },
   {
     id: 'user-drv-002',
@@ -47,6 +49,8 @@ const users = [
     role: 'driver',
     phone: '+91-9000000012',
     avatar_color: '#10b981',
+    vehicle_type: 'two_wheeler',
+    vehicle_number: 'MH 12 CD 5678',
   },
   {
     id: 'user-drv-003',
@@ -56,6 +60,8 @@ const users = [
     role: 'driver',
     phone: '+91-9000000013',
     avatar_color: '#f59e0b',
+    vehicle_type: 'four_wheeler',
+    vehicle_number: 'MH 14 TR 8812',
   },
   {
     id: 'user-drv-004',
@@ -65,6 +71,8 @@ const users = [
     role: 'driver',
     phone: '+91-9000000014',
     avatar_color: '#ec4899',
+    vehicle_type: 'four_wheeler',
+    vehicle_number: 'MH 12 BL 9901',
   },
   {
     id: 'user-drv-005',
@@ -74,6 +82,8 @@ const users = [
     role: 'driver',
     phone: '+91-9000000015',
     avatar_color: '#84cc16',
+    vehicle_type: 'two_wheeler',
+    vehicle_number: 'MH 12 XY 4321',
   },
 ];
 
@@ -97,16 +107,21 @@ async function seedDatabase(force = false) {
     if (existing) {
       if (force) {
         dbRun(
-          `UPDATE users SET password_hash = ?, role = ?, name = ?, phone = ?, avatar_color = ?, is_active = 1 WHERE id = ?`,
-          [hash, u.role, u.name, u.phone, u.avatar_color, existing.id]
+          `UPDATE users SET password_hash = ?, role = ?, name = ?, phone = ?, avatar_color = ?, vehicle_type = ?, vehicle_number = ?, is_active = 1 WHERE id = ?`,
+          [hash, u.role, u.name, u.phone, u.avatar_color, u.vehicle_type || 'two_wheeler', u.vehicle_number || null, existing.id]
         );
         console.log(`  🔄  Updated ${u.role.padEnd(8)} → ${u.email}`);
+      } else {
+        dbRun(
+          `UPDATE users SET vehicle_type = COALESCE(vehicle_type, ?), vehicle_number = COALESCE(vehicle_number, ?) WHERE id = ?`,
+          [u.vehicle_type || 'two_wheeler', u.vehicle_number || null, existing.id]
+        );
       }
     } else {
       dbRun(
-        `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-        [u.id, u.name, u.email.toLowerCase(), hash, u.role, u.phone, u.avatar_color]
+        `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color, vehicle_type, vehicle_number, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+        [u.id, u.name, u.email.toLowerCase(), hash, u.role, u.phone, u.avatar_color, u.vehicle_type || 'two_wheeler', u.vehicle_number || null]
       );
       console.log(`  ✅  Created ${u.role.padEnd(8)} → ${u.email}`);
     }

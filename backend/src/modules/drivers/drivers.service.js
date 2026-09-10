@@ -7,7 +7,7 @@ const { dbAll, dbGet, dbRun } = require('../../db/database');
 function getAllDriversWithLocations() {
   return dbAll(`
     SELECT
-      u.id, u.name, u.email, u.phone, u.avatar_color,
+      u.id, u.name, u.email, u.phone, u.avatar_color, u.vehicle_type, u.vehicle_number,
       dl.lat, dl.lng, dl.speed, dl.heading, dl.status, dl.address, dl.updated_at
     FROM users u
     LEFT JOIN driver_locations dl ON dl.driver_id = u.id
@@ -22,7 +22,7 @@ function getAllDriversWithLocations() {
 function getDriverById(driverId) {
   const driver = dbGet(`
     SELECT
-      u.id, u.name, u.email, u.phone, u.avatar_color, u.created_at,
+      u.id, u.name, u.email, u.phone, u.avatar_color, u.created_at, u.vehicle_type, u.vehicle_number,
       dl.lat, dl.lng, dl.speed, dl.heading, dl.status, dl.address, dl.updated_at
     FROM users u
     LEFT JOIN driver_locations dl ON dl.driver_id = u.id
@@ -97,4 +97,64 @@ function upsertLocation({ driver_id, lat, lng, speed = 0, heading = 0, status = 
   `, [driver_id, lat, lng, speed, heading]);
 }
 
-module.exports = { getAllDriversWithLocations, getDriverById, updateDriverStatus, upsertLocation };
+/**
+ * Update driver profile (vehicle_type, vehicle_number, phone, name).
+ */
+function updateDriverProfile(driverId, { vehicle_type, vehicle_number, phone, name }) {
+  const driver = dbGet("SELECT * FROM users WHERE id = ? AND role = 'driver'", [driverId]);
+  if (!driver) {
+    const err = new Error('Driver not found.');
+    err.status = 404;
+    throw err;
+  }
+
+  const updates = [];
+  const params = [];
+
+  if (vehicle_type !== undefined) {
+    const validTypes = ['two_wheeler', 'four_wheeler'];
+    if (!validTypes.includes(vehicle_type)) {
+      const err = new Error(`Invalid vehicle type. Must be one of: ${validTypes.join(', ')}`);
+      err.status = 400;
+      throw err;
+    }
+    updates.push('vehicle_type = ?');
+    params.push(vehicle_type);
+  }
+
+  if (vehicle_number !== undefined) {
+    updates.push('vehicle_number = ?');
+    params.push(vehicle_number ? vehicle_number.trim().toUpperCase() : null);
+  }
+
+  if (phone !== undefined) {
+    updates.push('phone = ?');
+    params.push(phone ? phone.trim() : null);
+  }
+
+  if (name !== undefined && name.trim()) {
+    updates.push('name = ?');
+    params.push(name.trim());
+  }
+
+  if (updates.length > 0) {
+    params.push(driverId);
+    dbRun(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+  }
+
+  return dbGet(`
+    SELECT u.id, u.name, u.email, u.role, u.phone, u.avatar_color, u.vehicle_type, u.vehicle_number, u.is_active, u.created_at,
+           dl.lat, dl.lng, dl.speed, dl.heading, dl.status, dl.address, dl.updated_at
+    FROM users u
+    LEFT JOIN driver_locations dl ON dl.driver_id = u.id
+    WHERE u.id = ?
+  `, [driverId]);
+}
+
+module.exports = {
+  getAllDriversWithLocations,
+  getDriverById,
+  updateDriverStatus,
+  upsertLocation,
+  updateDriverProfile,
+};

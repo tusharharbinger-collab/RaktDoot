@@ -222,8 +222,20 @@ export default function AssignDriverModal({ isOpen, onClose, destination, onAssi
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: 11, color: '#94a3b8' }}>
-                            {d.phone || d.email}
+                          <div style={{ fontSize: 11, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+                            <span>{d.phone || d.email}</span>
+                            {d.vehicle_number && (
+                              <span style={{
+                                color: d.vehicle_type === 'four_wheeler' ? '#38bdf8' : '#34d399',
+                                fontWeight: 700,
+                                background: d.vehicle_type === 'four_wheeler' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(52, 211, 153, 0.12)',
+                                padding: '1px 5px',
+                                borderRadius: 4,
+                                fontSize: 10.5,
+                              }}>
+                                {d.vehicle_type === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'} · {d.vehicle_number}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

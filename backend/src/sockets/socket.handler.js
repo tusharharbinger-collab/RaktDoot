@@ -67,7 +67,7 @@ function initSocket(httpServer) {
       const jwtSecret = process.env.JWT_SECRET || 'delivery_tracking_super_secret_key_2024';
       const decoded = jwt.verify(token, jwtSecret);
       const user = dbGet(
-        'SELECT id, name, email, role, avatar_color FROM users WHERE id = ? AND is_active = 1',
+        'SELECT id, name, email, role, avatar_color, vehicle_type, vehicle_number FROM users WHERE id = ? AND is_active = 1',
         [decoded.id]
       );
       if (!user) return next(new Error('Socket: User not found or inactive.'));
@@ -151,6 +151,8 @@ function initSocket(httpServer) {
           driver_id: user.id,
           driver_name: user.name,
           avatar_color: user.avatar_color,
+          vehicle_type: user.vehicle_type,
+          vehicle_number: user.vehicle_number,
           lat: parsedLat,
           lng: parsedLng,
           speed: parsedSpeed,

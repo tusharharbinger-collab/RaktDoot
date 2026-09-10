@@ -280,13 +280,19 @@ export default function CreateCollectionRequestModal({
               <option value="" disabled>-- Select Fleet Driver --</option>
               {fleetDriversList.map(d => (
                 <option key={d.id} value={d.id}>
-                  {d.name} ({d.status?.toUpperCase()}) — {Math.round(d.speed || 0)} km/h
+                  {d.name} [{d.vehicle_type === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'}{d.vehicle_number ? ` · ${d.vehicle_number}` : ''}] — {d.status?.toUpperCase()}
                 </option>
               ))}
             </select>
             {selectedDriver && (
-              <div style={{ fontSize: 11, color: '#10b981', marginTop: 4 }}>
-                ● Driver Status: {selectedDriver.status} · Speed: {Math.round(selectedDriver.speed || 0)} km/h
+              <div style={{ fontSize: 11, color: '#10b981', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span>● Status: {selectedDriver.status}</span>
+                <span>·</span>
+                <span style={{ color: selectedDriver.vehicle_type === 'four_wheeler' ? '#38bdf8' : '#34d399', fontWeight: 700 }}>
+                  {selectedDriver.vehicle_type === 'four_wheeler' ? '🚐 Four Wheeler' : '🛵 Two Wheeler'} {selectedDriver.vehicle_number ? `(${selectedDriver.vehicle_number})` : ''}
+                </span>
+                <span>·</span>
+                <span>Speed: {Math.round(selectedDriver.speed || 0)} km/h</span>
               </div>
             )}
           </div>

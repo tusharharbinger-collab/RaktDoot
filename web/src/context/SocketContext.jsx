@@ -217,7 +217,8 @@ export function SocketProvider({ children }) {
             ...existing,
             id: update.driver_id,
             name: update.driver_name || existing.name,
-            avatar_color: update.avatar_color || existing.avatar_color,
+            vehicle_type: update.vehicle_type || existing.vehicle_type,
+            vehicle_number: update.vehicle_number || existing.vehicle_number,
             lat: update.lat,
             lng: update.lng,
             speed: update.speed != null ? update.speed : (existing.speed || 0),
@@ -230,6 +231,22 @@ export function SocketProvider({ children }) {
           },
         };
       });
+    });
+
+    socket.on('driver_profile_updated', (data) => {
+      setFleetDrivers(prev => ({
+        ...prev,
+        [data.driver_id]: {
+          ...(prev[data.driver_id] || {}),
+          id: data.driver_id,
+          name: data.driver_name || prev[data.driver_id]?.name,
+          phone: data.phone !== undefined ? data.phone : prev[data.driver_id]?.phone,
+          vehicle_type: data.vehicle_type || prev[data.driver_id]?.vehicle_type,
+          vehicle_number: data.vehicle_number !== undefined ? data.vehicle_number : prev[data.driver_id]?.vehicle_number,
+          avatar_color: data.avatar_color || prev[data.driver_id]?.avatar_color,
+          updated_at: data.updated_at || new Date().toISOString(),
+        },
+      }));
     });
 
     socket.on('driver_status_changed', (data) => {
