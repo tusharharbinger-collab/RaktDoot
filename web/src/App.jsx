@@ -10,6 +10,7 @@ import ManagerDestinationsPage from './pages/ManagerDestinationsPage';
 import ManagerNotificationsPage from './pages/ManagerNotificationsPage';
 import ManagerWorkLogsPage from './pages/ManagerWorkLogsPage';
 import ManagerIssuesPage from './pages/ManagerIssuesPage';
+import ReportsPage from './pages/ReportsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminTelemetryPage from './pages/AdminTelemetryPage';
 import SettingsPage from './pages/SettingsPage';
@@ -35,6 +36,8 @@ function AppRoutes() {
           <Route path="/manager/notifications" element={<ManagerNotificationsPage />} />
           <Route path="/manager/work-logs" element={<ManagerWorkLogsPage />} />
           <Route path="/manager/issues" element={<ManagerIssuesPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/manager/reports" element={<ReportsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/telemetry" element={<AdminTelemetryPage />} />
           <Route path="/settings" element={<SettingsPage />} />
