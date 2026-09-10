@@ -231,7 +231,7 @@ function ManagerMapContent() {
           <img
             src={harbingerLogo}
             alt="Harbinger Group"
-            style={{ height: 18, objectFit: 'contain', opacity: 0.9 }}
+            style={{ height: 26, objectFit: 'contain', display: 'block' }}
             title="Harbinger Group"
           />
         </div>

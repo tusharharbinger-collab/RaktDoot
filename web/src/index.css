@@ -985,10 +985,10 @@ tbody td:first-child { color: var(--text-primary); font-weight: 500; }
 }
 
 .harbinger-logo-img {
-  height: 42px;
+  height: 36px;
   width: auto;
   display: block;
-  mix-blend-mode: screen;
+  object-fit: contain;
 }
 
 /* Language Selector */

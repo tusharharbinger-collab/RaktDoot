@@ -8,6 +8,7 @@ import api, { API_URL } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import LanguageToggle from '../components/common/LanguageToggle';
+import harbingerLogo from '../assets/harbinger_logo_actual.png';
 import DriverReportView from '../components/reports/DriverReportView';
 import HospitalReportView from '../components/reports/HospitalReportView';
 
@@ -134,8 +135,15 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
           <LanguageToggle />
+          <div style={{ height: 24, width: 1, background: 'var(--border-default)' }} />
+          <img
+            src={harbingerLogo}
+            alt="Harbinger Group"
+            style={{ height: 26, objectFit: 'contain', display: 'block' }}
+            title="Harbinger Group"
+          />
         </div>
       </div>
 

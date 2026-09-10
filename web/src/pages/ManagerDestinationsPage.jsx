@@ -150,7 +150,7 @@ export default function ManagerDestinationsPage() {
 
           <div style={{ height: 16, width: 1, background: 'var(--border-default)', margin: '0 2px' }} />
 
-          <img src={harbingerLogo} alt="Harbinger Group" style={{ height: 18, opacity: 0.9, objectFit: 'contain' }} />
+          <img src={harbingerLogo} alt="Harbinger Group" style={{ height: 26, objectFit: 'contain', display: 'block' }} />
         </div>
       </div>
 

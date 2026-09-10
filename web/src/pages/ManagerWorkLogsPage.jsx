@@ -206,7 +206,7 @@ export default function ManagerWorkLogsPage() {
 
           <LanguageToggle />
           <div style={{ height: 24, width: 1, background: 'var(--border-default)' }} />
-          <img src={harbingerLogo} alt="Harbinger Group" style={{ height: 24, opacity: 0.9, objectFit: 'contain' }} />
+          <img src={harbingerLogo} alt="Harbinger Group" style={{ height: 26, objectFit: 'contain', display: 'block' }} />
         </div>
       </div>
 
