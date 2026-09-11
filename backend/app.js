@@ -72,6 +72,12 @@ app.get(['/download/apk', '/download/driver-apk', '/download/raktdoot-driver.apk
   res.download(apkPath, 'raktdoot-driver.apk');
 });
 
+// Download Technical Documentation (.docx)
+app.get(['/download/doc', '/download/documentation', '/download/docx', '/download/Raktdoot_Technical_Documentation.docx'], (_req, res) => {
+  const docPath = path.resolve(__dirname, 'public/downloads/Raktdoot_Technical_Documentation.docx');
+  res.download(docPath, 'Raktdoot_Technical_Documentation.docx');
+});
+
 // ─── ROOT & HEALTH CHECK ───────────────────────────────────────────────────────
 app.get('/', (_req, res) => {
   res.json({

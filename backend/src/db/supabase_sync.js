@@ -150,23 +150,7 @@ async function pushToSupabase() {
   const sqlite = getDB();
 
   try {
-    // 0. Driver Locations
-    const locations = sqlite.prepare('SELECT * FROM driver_locations').all();
-    for (const l of locations) {
-      await client.query(`
-        INSERT INTO driver_locations (driver_id, lat, lng, speed, heading, status, address)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (driver_id) DO UPDATE SET
-          lat = EXCLUDED.lat,
-          lng = EXCLUDED.lng,
-          speed = EXCLUDED.speed,
-          heading = EXCLUDED.heading,
-          status = EXCLUDED.status,
-          address = EXCLUDED.address
-      `, [l.driver_id, l.lat, l.lng, l.speed, l.heading, l.status, l.address]);
-    }
-
-    // 1. Users
+    // 1. Users (Must be synced FIRST so foreign keys exist)
     const users = sqlite.prepare('SELECT * FROM users').all();
     for (const u of users) {
       await client.query(`
@@ -180,6 +164,25 @@ async function pushToSupabase() {
           vehicle_type = EXCLUDED.vehicle_type,
           vehicle_number = EXCLUDED.vehicle_number
       `, [u.id, u.name, u.email, u.password_hash, u.role, u.phone, u.avatar_color, u.push_token, u.vehicle_type, u.vehicle_number, u.is_active]);
+    }
+
+    // 2. Driver Locations (Only for existing valid drivers)
+    const locations = sqlite.prepare(`
+      SELECT dl.* FROM driver_locations dl
+      JOIN users u ON u.id = dl.driver_id
+    `).all();
+    for (const l of locations) {
+      await client.query(`
+        INSERT INTO driver_locations (driver_id, lat, lng, speed, heading, status, address)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (driver_id) DO UPDATE SET
+          lat = EXCLUDED.lat,
+          lng = EXCLUDED.lng,
+          speed = EXCLUDED.speed,
+          heading = EXCLUDED.heading,
+          status = EXCLUDED.status,
+          address = EXCLUDED.address
+      `, [l.driver_id, l.lat, l.lng, l.speed, l.heading, l.status, l.address]);
     }
 
     // 2. Destinations
