@@ -234,6 +234,8 @@ export default function ReportIssueModal({
               onChangeText={setDescription}
               multiline
               numberOfLines={3}
+              autoComplete="off"
+              importantForAutofill="no"
             />
 
             {/* Submit Button */}

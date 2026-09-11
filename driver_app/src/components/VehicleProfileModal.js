@@ -221,6 +221,8 @@ export default function VehicleProfileModal({
                 onChangeText={(val) => setVehicleNumber(val.toUpperCase())}
                 autoCapitalize="characters"
                 autoCorrect={false}
+                autoComplete="off"
+                importantForAutofill="no"
                 maxLength={15}
                 onFocus={() => setPlateFocused(true)}
                 onBlur={() => setPlateFocused(false)}
@@ -240,6 +242,8 @@ export default function VehicleProfileModal({
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
                 autoCorrect={false}
+                autoComplete="off"
+                importantForAutofill="no"
                 onFocus={() => setPhoneFocused(true)}
                 onBlur={() => setPhoneFocused(false)}
               />
@@ -256,6 +260,8 @@ export default function VehicleProfileModal({
                 value={name}
                 onChangeText={setName}
                 autoCorrect={false}
+                autoComplete="off"
+                importantForAutofill="no"
                 onFocus={() => setNameFocused(true)}
                 onBlur={() => setNameFocused(false)}
               />

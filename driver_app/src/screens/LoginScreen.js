@@ -149,18 +149,25 @@ export default function LoginScreen({ onLoginSuccess }) {
     }
   };
 
-  const indicatorLeft = tabSlide.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['2%', '50%'],
-  });
+  const indicatorLeft = useRef(
+    tabSlide.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['2%', '50%'],
+    })
+  ).current;
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.root}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.root}>
       <StatusBar barStyle="light-content" backgroundColor="#080910" />
       <View style={s.glowTL} pointerEvents="none" />
       <View style={s.glowBR} pointerEvents="none" />
 
-      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={s.scroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View style={[s.inner, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
 
           <View style={s.logoBlock}>
@@ -202,6 +209,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                   <TextInput style={s.input} placeholder="Enter your email" placeholderTextColor="#94a3b8"
                     value={siEmail} onChangeText={setSiEmail} autoCapitalize="none"
                     keyboardType="email-address" autoCorrect={false}
+                    autoComplete="off" importantForAutofill="no"
                     onFocus={() => setSiEmailFocused(true)} onBlur={() => setSiEmailFocused(false)} />
                 </View>
 
@@ -209,7 +217,8 @@ export default function LoginScreen({ onLoginSuccess }) {
                 <View style={[s.inputRow, siPassFocused && s.inputRowFocused]}>
                   <TextInput style={[s.input, { flex: 1 }]} placeholder="Enter your password" placeholderTextColor="#94a3b8"
                     value={siPassword} onChangeText={setSiPassword} secureTextEntry={!siShowPass}
-                    autoCorrect={false} onFocus={() => setSiPassFocused(true)} onBlur={() => setSiPassFocused(false)} />
+                    autoCorrect={false} autoComplete="off" importantForAutofill="no"
+                    onFocus={() => setSiPassFocused(true)} onBlur={() => setSiPassFocused(false)} />
                   <TouchableOpacity onPress={() => setSiShowPass(v => !v)} style={s.eyeBtn} hitSlop={{ top:10,bottom:10,left:10,right:10 }}>
                     <Text style={{ color: '#818cf8', fontSize: 12, fontWeight: '600' }}>{siShowPass ? 'HIDE' : 'SHOW'}</Text>
                   </TouchableOpacity>
@@ -240,6 +249,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                   <Text style={s.inputIcon}>👤</Text>
                   <TextInput style={s.input} placeholder="Full Name" placeholderTextColor="#94a3b8"
                     value={rgName} onChangeText={setRgName} autoCorrect={false}
+                    autoComplete="off" importantForAutofill="no"
                     onFocus={() => setRgNameFocused(true)} onBlur={() => setRgNameFocused(false)} />
                 </View>
 
@@ -249,6 +259,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                   <TextInput style={s.input} placeholder="Enter your email" placeholderTextColor="#94a3b8"
                     value={rgEmail} onChangeText={setRgEmail} autoCapitalize="none"
                     keyboardType="email-address" autoCorrect={false}
+                    autoComplete="off" importantForAutofill="no"
                     onFocus={() => setRgEmailFocused(true)} onBlur={() => setRgEmailFocused(false)} />
                 </View>
 
@@ -257,6 +268,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                   <Text style={s.inputIcon}>📞</Text>
                   <TextInput style={s.input} placeholder="+91 98765 43210" placeholderTextColor="#94a3b8"
                     value={rgPhone} onChangeText={setRgPhone} keyboardType="phone-pad" autoCorrect={false}
+                    autoComplete="off" importantForAutofill="no"
                     onFocus={() => setRgPhoneFocused(true)} onBlur={() => setRgPhoneFocused(false)} />
                 </View>
 
@@ -298,6 +310,8 @@ export default function LoginScreen({ onLoginSuccess }) {
                     onChangeText={setRgVehicleNumber}
                     autoCapitalize="characters"
                     autoCorrect={false}
+                    autoComplete="off"
+                    importantForAutofill="no"
                     onFocus={() => setRgVehicleFocused(true)}
                     onBlur={() => setRgVehicleFocused(false)}
                   />
@@ -308,7 +322,8 @@ export default function LoginScreen({ onLoginSuccess }) {
                   <Text style={s.inputIcon}>🔒</Text>
                   <TextInput style={[s.input, { flex: 1 }]} placeholder="Min. 6 characters" placeholderTextColor="#94a3b8"
                     value={rgPassword} onChangeText={setRgPassword} secureTextEntry={!rgShowPass}
-                    autoCorrect={false} onFocus={() => setRgPassFocused(true)} onBlur={() => setRgPassFocused(false)} />
+                    autoCorrect={false} autoComplete="off" importantForAutofill="no"
+                    onFocus={() => setRgPassFocused(true)} onBlur={() => setRgPassFocused(false)} />
                   <TouchableOpacity onPress={() => setRgShowPass(v => !v)} style={s.eyeBtn} hitSlop={{ top:10,bottom:10,left:10,right:10 }}>
                     <Text style={s.eyeIcon}>{rgShowPass ? '🙈' : '👁️'}</Text>
                   </TouchableOpacity>
@@ -319,7 +334,8 @@ export default function LoginScreen({ onLoginSuccess }) {
                   <Text style={s.inputIcon}>🔐</Text>
                   <TextInput style={[s.input, { flex: 1 }]} placeholder="Re-enter password" placeholderTextColor="#94a3b8"
                     value={rgConfirm} onChangeText={setRgConfirm} secureTextEntry={!rgShowConfirm}
-                    autoCorrect={false} onFocus={() => setRgConfFocused(true)} onBlur={() => setRgConfFocused(false)} />
+                    autoCorrect={false} autoComplete="off" importantForAutofill="no"
+                    onFocus={() => setRgConfFocused(true)} onBlur={() => setRgConfFocused(false)} />
                   <TouchableOpacity onPress={() => setRgShowConfirm(v => !v)} style={s.eyeBtn} hitSlop={{ top:10,bottom:10,left:10,right:10 }}>
                     <Text style={s.eyeIcon}>{rgShowConfirm ? '🙈' : '👁️'}</Text>
                   </TouchableOpacity>
@@ -386,8 +402,8 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#080910' },
   glowTL: { position: 'absolute', top: -60, left: -60, width: 240, height: 240, borderRadius: 120, backgroundColor: 'rgba(180,20,20,0.16)' },
   glowBR: { position: 'absolute', bottom: -60, right: -60, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(99,102,241,0.08)' },
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 22, paddingVertical: 40 },
-  inner: { alignItems: 'center', gap: 24 },
+  scroll: { flexGrow: 1, paddingHorizontal: 22, paddingTop: Platform.OS === 'android' ? 24 : 40, paddingBottom: 60 },
+  inner: { alignItems: 'center', gap: 20 },
   logoBlock: { alignItems: 'center', gap: 6 },
   logosRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 10 },
   omDropImg: { width: 72, height: 88, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.55, shadowRadius: 14, elevation: 10 },
@@ -415,7 +431,7 @@ const s = StyleSheet.create({
   vehicleTypeLabelActive: { color: '#ffffff', fontWeight: '800' },
   vehicleTypeSub: { fontSize: 10, color: '#64748b', marginTop: 2 },
   inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#090a11', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', borderRadius: 11, paddingHorizontal: 12, marginBottom: 14, minHeight: 48 },
-  inputRowFocused: { borderColor: 'rgba(220,38,38,0.5)', shadowColor: '#DC2626', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
+  inputRowFocused: { borderColor: '#ef4444' },
   inputRowError: { borderColor: 'rgba(251,113,133,0.6)' },
   inputIcon: { fontSize: 15, marginRight: 9, color: '#ffffff' },
   input: { flex: 1, color: '#ffffff', fontSize: 14, paddingVertical: 10 },

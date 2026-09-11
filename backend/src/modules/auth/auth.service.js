@@ -58,6 +58,12 @@ async function register({ name, email, password, role = 'driver', phone, vehicle
 
   const user = dbGet('SELECT * FROM users WHERE id = ?', [id]);
   const token = signToken(id);
+
+  try {
+    const { syncUser } = require('../../db/supabase_sync');
+    syncUser(user);
+  } catch (_) {}
+
   return { token, user: sanitizeUser(user) };
 }
 
