@@ -103,13 +103,58 @@ async function updateUser(userId, { name, email, phone, role, is_active, passwor
   return dbGet('SELECT id, name, email, role, phone, avatar_color, vehicle_type, vehicle_number, is_active, created_at FROM users WHERE id = ?', [userId]);
 }
 
-function deleteUser(userId, requesterId) {
+async function deleteUser(userId, requesterId) {
   if (userId === requesterId) {
-    const err = new Error('Cannot delete your own account.'); err.status = 400; throw err;
+    const err = new Error('Cannot delete your own account.');
+    err.status = 400;
+    throw err;
   }
   const user = dbGet('SELECT id FROM users WHERE id = ?', [userId]);
-  if (!user) { const err = new Error('User not found.'); err.status = 404; throw err; }
+  if (!user) {
+    const err = new Error('User not found.');
+    err.status = 404;
+    throw err;
+  }
+
+  // 1. Cascade delete all child/dependent records to avoid foreign key errors
+  try { dbRun('DELETE FROM driver_locations WHERE driver_id = ?', [userId]); } catch (_) {}
+  try { dbRun('DELETE FROM location_history WHERE driver_id = ?', [userId]); } catch (_) {}
+  try { dbRun('DELETE FROM notifications WHERE user_id = ?', [userId]); } catch (_) {}
+  try { dbRun('DELETE FROM driver_assignments WHERE driver_id = ? OR assigned_by = ?', [userId, userId]); } catch (_) {}
+  try { dbRun('DELETE FROM issues WHERE driver_id = ? OR resolved_by = ?', [userId, userId]); } catch (_) {}
+  try { dbRun('DELETE FROM work_logs WHERE driver_id = ?', [userId]); } catch (_) {}
+  try { dbRun('UPDATE destinations SET created_by = NULL WHERE created_by = ?', [userId]); } catch (_) {}
+
+  // 2. Delete user from local SQLite
   dbRun('DELETE FROM users WHERE id = ?', [userId]);
+
+  // 3. Asynchronously cascade delete from Supabase PostgreSQL
+  try {
+    const { getPool } = require('../../db/supabase_sync');
+    const pool = getPool();
+    if (pool) {
+      pool.query(`
+        DELETE FROM driver_locations WHERE driver_id = $1;
+        DELETE FROM location_history WHERE driver_id = $1;
+        DELETE FROM notifications WHERE user_id = $1;
+        DELETE FROM driver_assignments WHERE driver_id = $1 OR assigned_by = $1;
+        DELETE FROM issues WHERE driver_id = $1 OR resolved_by = $1;
+        DELETE FROM work_logs WHERE driver_id = $1;
+        UPDATE destinations SET created_by = NULL WHERE created_by = $1;
+        DELETE FROM users WHERE id = $1;
+      `, [userId]).catch(e => console.warn('[Supabase Delete User Sync]:', e.message));
+    }
+  } catch (_) {}
+
+  // 4. Broadcast driver removal to fleet monitors
+  try {
+    const { getIO } = require('../../sockets/socket.handler');
+    const io = getIO();
+    if (io) {
+      io.to('fleet-monitors').emit('driver_removed', { driver_id: userId });
+    }
+  } catch (_) {}
+
   return { deleted: userId };
 }
 

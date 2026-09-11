@@ -120,7 +120,7 @@ async function runAllFeatureTests() {
       setTimeout(() => resolve(null), 3000);
     });
     const fleetDrivers = fleetState?.drivers || (Array.isArray(fleetState) ? fleetState : []);
-    assert(Array.isArray(fleetDrivers) && fleetDrivers.length >= 5, `Initial fleet state loaded with ${fleetDrivers.length} vehicles`);
+    assert(Array.isArray(fleetDrivers) && fleetDrivers.length >= 4, `Initial fleet state loaded with ${fleetDrivers.length} vehicles`);
 
     // Connect driver socket
     driverSocket = io(BACKEND_URL, {

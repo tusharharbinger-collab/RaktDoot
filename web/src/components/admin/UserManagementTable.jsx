@@ -152,25 +152,53 @@ function UserFormModal({ user, onClose, onSave }) {
 
 function DeleteConfirmModal({ user, onConfirm, onClose }) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const handleConfirm = async () => {
     setLoading(true);
-    await onConfirm(user.id);
-    setLoading(false);
+    setError(null);
+    try {
+      await onConfirm(user.id);
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || 'Failed to delete user.');
+    } finally {
+      setLoading(false);
+    }
   };
+
   return (
-    <div className="modal-overlay">
-      <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <span className="modal-title" style={{ color: 'var(--color-danger)' }}>Delete User</span>
-          <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose}><X size={14} /></button>
+          <span className="modal-title" style={{ color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>⚠️</span> Delete User
+          </span>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose} disabled={loading}><X size={14} /></button>
         </div>
         <div className="modal-body">
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+          {error && (
+            <div style={{
+              background: 'rgba(239,68,68,0.15)',
+              border: '1px solid rgba(239,68,68,0.3)',
+              borderRadius: 'var(--radius-md)',
+              padding: '10px 14px',
+              color: 'var(--color-danger)',
+              fontSize: 13,
+              marginBottom: 14,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              <span>❌</span>
+              <span>{error}</span>
+            </div>
+          )}
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
             Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>{user.name}</strong>? This action cannot be undone and will remove all associated data.
           </p>
         </div>
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
           <button id="btn-confirm-delete" className="btn btn-danger" onClick={handleConfirm} disabled={loading}>
             {loading ? 'Deleting...' : 'Delete User'}
           </button>

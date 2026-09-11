@@ -23,9 +23,9 @@ async function updateUser(req, res, next) {
   } catch (err) { next(err); }
 }
 
-function deleteUser(req, res, next) {
+async function deleteUser(req, res, next) {
   try {
-    const result = adminService.deleteUser(req.params.id, req.user.id);
+    const result = await adminService.deleteUser(req.params.id, req.user.id);
     res.json({ success: true, data: result });
   } catch (err) { next(err); }
 }
