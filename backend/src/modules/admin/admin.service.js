@@ -119,6 +119,7 @@ async function deleteUser(userId, requesterId) {
   // 1. Cascade delete all child/dependent records to avoid foreign key errors
   try { dbRun('DELETE FROM driver_locations WHERE driver_id = ?', [userId]); } catch (_) {}
   try { dbRun('DELETE FROM location_history WHERE driver_id = ?', [userId]); } catch (_) {}
+  try { dbRun('DELETE FROM geofence_notifications WHERE driver_id = ?', [userId]); } catch (_) {}
   try { dbRun('DELETE FROM notifications WHERE user_id = ?', [userId]); } catch (_) {}
   try { dbRun('DELETE FROM driver_assignments WHERE driver_id = ? OR assigned_by = ?', [userId, userId]); } catch (_) {}
   try { dbRun('DELETE FROM issues WHERE driver_id = ? OR resolved_by = ?', [userId, userId]); } catch (_) {}
@@ -136,6 +137,7 @@ async function deleteUser(userId, requesterId) {
       pool.query(`
         DELETE FROM driver_locations WHERE driver_id = $1;
         DELETE FROM location_history WHERE driver_id = $1;
+        DELETE FROM geofence_notifications WHERE driver_id = $1;
         DELETE FROM notifications WHERE user_id = $1;
         DELETE FROM driver_assignments WHERE driver_id = $1 OR assigned_by = $1;
         DELETE FROM issues WHERE driver_id = $1 OR resolved_by = $1;
@@ -156,6 +158,29 @@ async function deleteUser(userId, requesterId) {
   } catch (_) {}
 
   return { deleted: userId };
+}
+
+async function changeUserPassword(userId, newPassword) {
+  const user = dbGet('SELECT id, name, email, role FROM users WHERE id = ?', [userId]);
+  if (!user) {
+    const err = new Error('User not found.');
+    err.status = 404;
+    throw err;
+  }
+  const hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  dbRun("UPDATE users SET password_hash = ? WHERE id = ?", [hash, userId]);
+
+  // Sync to Supabase immediately
+  try {
+    const { getPool } = require('../../db/supabase_sync');
+    const pool = getPool();
+    if (pool) {
+      pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, userId])
+        .catch(e => console.warn('[Supabase Change Password Sync]:', e.message));
+    }
+  } catch (_) {}
+
+  return dbGet('SELECT id, name, email, role, phone, avatar_color, vehicle_type, vehicle_number, is_active, created_at FROM users WHERE id = ?', [userId]);
 }
 
 function getTelemetry() {
@@ -184,4 +209,4 @@ function getTelemetry() {
   };
 }
 
-module.exports = { listUsers, createUser, updateUser, deleteUser, getTelemetry };
+module.exports = { listUsers, createUser, updateUser, changeUserPassword, deleteUser, getTelemetry };

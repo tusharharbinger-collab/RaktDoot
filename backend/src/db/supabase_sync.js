@@ -382,6 +382,7 @@ async function initSupabaseSync() {
 
 module.exports = {
   isSupabaseConfigured,
+  getPool,
   initSupabaseSync,
   pullFromSupabase,
   pushToSupabase,

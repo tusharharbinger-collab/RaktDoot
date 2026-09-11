@@ -30,6 +30,17 @@ async function deleteUser(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function changeUserPassword(req, res, next) {
+  try {
+    const { password } = req.body;
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
+    }
+    const user = await adminService.changeUserPassword(req.params.id, password);
+    res.json({ success: true, message: 'Password updated successfully.', data: user });
+  } catch (err) { next(err); }
+}
+
 function getTelemetry(req, res, next) {
   try {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -40,4 +51,4 @@ function getTelemetry(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listUsers, createUser, updateUser, deleteUser, getTelemetry };
+module.exports = { listUsers, createUser, updateUser, changeUserPassword, deleteUser, getTelemetry };

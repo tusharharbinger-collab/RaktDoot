@@ -12,9 +12,9 @@ const users = [
   // Admin
   {
     id: 'user-admin-001',
-    name: 'Admin User',
-    email: 'admin@delivery.com',
-    password: 'admin123',
+    name: 'Jankalyan Central Admin',
+    email: 'raktdoot@jankalyan.com',
+    password: 'RDJK@1983',
     role: 'admin',
     phone: '+91-9000000001',
     avatar_color: '#ef4444',
@@ -22,118 +22,45 @@ const users = [
   // Managers
   {
     id: 'user-mgr-001',
-    name: 'Sarah Manager',
-    email: 'manager@delivery.com',
-    password: 'manager123',
+    name: 'Jankalyan Dispatch Manager',
+    email: 'tracker@jankalyan.com',
+    password: 'RDJK@1983',
     role: 'manager',
     phone: '+91-9000000002',
     avatar_color: '#8b5cf6',
   },
-  // Drivers
-  {
-    id: 'user-drv-001',
-    name: 'Ravi Kumar',
-    email: 'driver1@delivery.com',
-    password: 'driver123',
-    role: 'driver',
-    phone: '+91-9000000011',
-    avatar_color: '#06b6d4',
-    vehicle_type: 'two_wheeler',
-    vehicle_number: 'MH 12 AB 1234',
-  },
-  {
-    id: 'user-drv-002',
-    name: 'Priya Sharma',
-    email: 'driver2@delivery.com',
-    password: 'driver123',
-    role: 'driver',
-    phone: '+91-9000000012',
-    avatar_color: '#10b981',
-    vehicle_type: 'two_wheeler',
-    vehicle_number: 'MH 12 CD 5678',
-  },
-  {
-    id: 'user-drv-003',
-    name: 'Amit Patel',
-    email: 'driver3@delivery.com',
-    password: 'driver123',
-    role: 'driver',
-    phone: '+91-9000000013',
-    avatar_color: '#f59e0b',
-    vehicle_type: 'four_wheeler',
-    vehicle_number: 'MH 14 TR 8812',
-  },
-  {
-    id: 'user-drv-004',
-    name: 'Neha Singh',
-    email: 'driver4@delivery.com',
-    password: 'driver123',
-    role: 'driver',
-    phone: '+91-9000000014',
-    avatar_color: '#ec4899',
-    vehicle_type: 'four_wheeler',
-    vehicle_number: 'MH 12 BL 9901',
-  },
-  {
-    id: 'user-drv-005',
-    name: 'Kiran Rao',
-    email: 'driver5@delivery.com',
-    password: 'driver123',
-    role: 'driver',
-    phone: '+91-9000000015',
-    avatar_color: '#84cc16',
-    vehicle_type: 'two_wheeler',
-    vehicle_number: 'MH 12 XY 4321',
-  },
 ];
 
-// Demo initial locations across Pune with exact physical addresses
-const initialLocations = [
-  { driver_id: 'user-drv-001', lat: 18.5080, lng: 73.8550, speed: 28, heading: 45,  status: 'active', address: 'Swargate Chowk, Pune, Maharashtra' },
-  { driver_id: 'user-drv-002', lat: 18.5204, lng: 73.8567, speed: 36, heading: 90,  status: 'active', address: 'FC Road, Shivaji Nagar, Pune, Maharashtra' },
-  { driver_id: 'user-drv-003', lat: 18.4900, lng: 73.8400, speed: 0,  heading: 0,   status: 'idle',   address: 'Parvati Paytha, Pune, Maharashtra' },
-  { driver_id: 'user-drv-004', lat: 18.5550, lng: 73.8100, speed: 48, heading: 270, status: 'active', address: 'Baner Road, Pune, Maharashtra' },
-  { driver_id: 'user-drv-005', lat: 18.6280, lng: 73.8000, speed: 0,  heading: 180, status: 'issue',  address: 'Pimpri-Chinchwad, Pune, Maharashtra' },
-];
+// No demo driver locations seeded by default
+const initialLocations = [];
 
 async function seedDatabase(force = false) {
   initDB();
 
-  console.log('🌱 Ensuring demo users & locations in database...');
+  console.log('🌱 Ensuring admin & manager users in database...');
+
+  // Remove old demo accounts if present
+  try {
+    dbRun("DELETE FROM users WHERE email IN ('admin@delivery.com', 'manager@delivery.com')");
+  } catch (_) {}
 
   for (const u of users) {
     const existing = dbGet('SELECT id FROM users WHERE LOWER(email) = LOWER(?)', [u.email]);
     const hash = await bcrypt.hash(u.password, SALT_ROUNDS);
     if (existing) {
-      if (force) {
-        dbRun(
-          `UPDATE users SET password_hash = ?, role = ?, name = ?, phone = ?, avatar_color = ?, vehicle_type = ?, vehicle_number = ?, is_active = 1 WHERE id = ?`,
-          [hash, u.role, u.name, u.phone, u.avatar_color, u.vehicle_type || 'two_wheeler', u.vehicle_number || null, existing.id]
-        );
-        console.log(`  🔄  Updated ${u.role.padEnd(8)} → ${u.email}`);
-      } else {
-        dbRun(
-          `UPDATE users SET vehicle_type = COALESCE(vehicle_type, ?), vehicle_number = COALESCE(vehicle_number, ?) WHERE id = ?`,
-          [u.vehicle_type || 'two_wheeler', u.vehicle_number || null, existing.id]
-        );
-      }
+      dbRun(
+        `UPDATE users SET password_hash = ?, role = ?, name = ?, phone = ?, avatar_color = ?, is_active = 1 WHERE id = ?`,
+        [hash, u.role, u.name, u.phone, u.avatar_color, existing.id]
+      );
+      console.log(`  🔄  Updated ${u.role.padEnd(8)} → ${u.email}`);
     } else {
       dbRun(
-        `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color, vehicle_type, vehicle_number, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-        [u.id, u.name, u.email.toLowerCase(), hash, u.role, u.phone, u.avatar_color, u.vehicle_type || 'two_wheeler', u.vehicle_number || null]
+        `INSERT INTO users (id, name, email, password_hash, role, phone, avatar_color, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+        [u.id, u.name, u.email.toLowerCase(), hash, u.role, u.phone, u.avatar_color]
       );
       console.log(`  ✅  Created ${u.role.padEnd(8)} → ${u.email}`);
     }
-  }
-
-  console.log('📍 Seeding driver locations...');
-  for (const loc of initialLocations) {
-    dbRun(
-      `INSERT OR REPLACE INTO driver_locations (driver_id, lat, lng, speed, heading, status, address, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [loc.driver_id, loc.lat, loc.lng, loc.speed, loc.heading, loc.status, loc.address]
-    );
   }
 
   console.log('\n🎯 Seeding sample destinations in Pune...');
@@ -262,6 +189,8 @@ async function seedDatabase(force = false) {
     ];
 
     for (const log of sampleWorkLogs) {
+      const driverExists = dbGet("SELECT id FROM users WHERE id = ?", [log.driver_id]);
+      if (!driverExists) continue;
       dbRun(`
         INSERT INTO work_logs (
           id, assignment_id, driver_id, destination_id,

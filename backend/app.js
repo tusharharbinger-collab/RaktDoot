@@ -96,9 +96,8 @@ app.all('/api/seed', async (_req, res) => {
       success: true,
       message: 'Database seeded successfully with demo users and locations!',
       credentials: [
-        { role: 'manager', email: 'manager@delivery.com', password: 'manager123' },
-        { role: 'admin', email: 'admin@delivery.com', password: 'admin123' },
-        { role: 'driver', email: 'driver1@delivery.com', password: 'driver123' },
+        { role: 'admin', email: 'raktdoot@jankalyan.com', password: 'RDJK@1983' },
+        { role: 'manager', email: 'tracker@jankalyan.com', password: 'RDJK@1983' },
       ],
     });
   } catch (err) {

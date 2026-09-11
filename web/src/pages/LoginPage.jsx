@@ -168,7 +168,7 @@ export default function LoginPage() {
                     className="input-field-custom"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="manager@delivery.com or admin@delivery.com"
+                    placeholder="tracker@jankalyan.com or raktdoot@jankalyan.com"
                     autoComplete="email"
                   />
                 </div>

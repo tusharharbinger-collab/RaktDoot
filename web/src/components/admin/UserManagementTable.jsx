@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Search, X, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, X, Eye, EyeOff, KeyRound, ShieldCheck } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -208,6 +208,165 @@ function DeleteConfirmModal({ user, onConfirm, onClose }) {
   );
 }
 
+function ChangePasswordModal({ user, onClose, onSuccess }) {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!password) {
+      setError('Please enter a new password.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.patch(`/admin/users/${user.id}/password`, { password });
+      setSuccess(true);
+      setTimeout(() => {
+        if (onSuccess) onSuccess();
+        onClose();
+      }, 1100);
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || 'Failed to update password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const roleBadgeClass = ROLE_COLORS[user?.role] || 'badge-driver';
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 8,
+              background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b'
+            }}>
+              <KeyRound size={17} />
+            </div>
+            <div>
+              <span className="modal-title" style={{ fontSize: 16, fontWeight: 700 }}>Change Password</span>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Admin credential management</div>
+            </div>
+          </div>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose} disabled={loading}><X size={14} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            {/* Target User Info Banner */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 14px', borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="user-avatar" style={{ background: user?.avatar_color || '#b91c1c', width: 34, height: 34, fontSize: 12, borderRadius: 7 }}>
+                  {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US'}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{user?.email}</div>
+                </div>
+              </div>
+              <span className={`badge ${roleBadgeClass}`} style={{ textTransform: 'capitalize' }}>{user?.role}</span>
+            </div>
+
+            {error && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: 'var(--radius-md)', padding: '10px 12px', color: 'var(--color-danger)', fontSize: 12.5
+              }}>
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: 'var(--radius-md)', padding: '10px 12px', color: '#34d399', fontSize: 12.5,
+                display: 'flex', alignItems: 'center', gap: 8
+              }}>
+                <ShieldCheck size={16} />
+                <span>Password changed successfully for <strong>{user?.name}</strong>!</span>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: 12 }}>New Password *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="change-new-password"
+                  className="input"
+                  type={showPass ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Enter min 6 characters"
+                  style={{ paddingRight: 44 }}
+                  autoFocus
+                  disabled={loading || success}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-icon btn-sm"
+                  style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)' }}
+                  onClick={() => setShowPass(v => !v)}
+                >
+                  {showPass ? <EyeOff size={13} /> : <Eye size={13} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: 12 }}>Confirm New Password *</label>
+              <input
+                id="change-confirm-password"
+                className="input"
+                type={showPass ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Repeat new password"
+                disabled={loading || success}
+              />
+            </div>
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
+            <button
+              id="btn-submit-change-password"
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading || success}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <KeyRound size={13} />
+              {loading ? 'Updating...' : success ? 'Updated!' : 'Set New Password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function UserManagementTable() {
   const { user: me } = useAuth();
   const [users, setUsers] = useState([]);
@@ -216,6 +375,7 @@ export default function UserManagementTable() {
   const [roleFilter, setRoleFilter] = useState('');
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [passwordTarget, setPasswordTarget] = useState(null);
   const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, pages: 1 });
@@ -341,7 +501,16 @@ export default function UserManagementTable() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button id={`btn-edit-${u.id}`} className="btn btn-ghost btn-icon btn-sm" onClick={() => setEditTarget(u)} title="Edit"><Pencil size={13} /></button>
+                        <button
+                          id={`btn-password-${u.id}`}
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => setPasswordTarget(u)}
+                          title="Change Password"
+                          style={{ color: '#f59e0b' }}
+                        >
+                          <KeyRound size={13} />
+                        </button>
+                        <button id={`btn-edit-${u.id}`} className="btn btn-ghost btn-icon btn-sm" onClick={() => setEditTarget(u)} title="Edit Details"><Pencil size={13} /></button>
                         {u.id !== me?.id && (
                           <button id={`btn-delete-${u.id}`} className="btn btn-ghost btn-icon btn-sm" onClick={() => setDeleteTarget(u)} title="Delete" style={{ color: 'var(--color-danger)' }}><Trash2 size={13} /></button>
                         )}
@@ -370,6 +539,9 @@ export default function UserManagementTable() {
       )}
       {deleteTarget && (
         <DeleteConfirmModal user={deleteTarget} onConfirm={handleDelete} onClose={() => setDeleteTarget(null)} />
+      )}
+      {passwordTarget && (
+        <ChangePasswordModal user={passwordTarget} onClose={() => setPasswordTarget(null)} onSuccess={() => load()} />
       )}
     </div>
   );
