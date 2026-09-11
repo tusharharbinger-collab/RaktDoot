@@ -61,7 +61,7 @@ app.get(['/driver', '/driver/*'], (_req, res) => {
 
 // Download Driver App Zip
 app.use('/downloads', express.static(path.resolve(__dirname, 'public/downloads')));
-app.get(['/download/driver-app', '/download-driver-app'], (_req, res) => {
+app.get(['/download/driver-app', '/download-driver-app', '/download/driver-app.zip', '/download/raktdoot-driver-app.zip'], (_req, res) => {
   const zipPath = path.resolve(__dirname, 'public/downloads/raktdoot-driver-app.zip');
   res.download(zipPath, 'raktdoot-driver-app.zip');
 });
@@ -116,7 +116,7 @@ app.use('/api/assignments', assignmentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/work-logs', worklogsRoutes);
 app.use('/api/reports', reportsRoutes);
-app.use('/api/blood-categories', bloodCategoriesRoutes);
+app.use(['/api/blood-categories', '/api/categories'], bloodCategoriesRoutes);
 
 // ─── 404 FALLBACK ─────────────────────────────────────────────────────────────
 app.use((_req, res) => {

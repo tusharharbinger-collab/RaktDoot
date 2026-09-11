@@ -11,6 +11,10 @@ router.get('/', requireRole('manager', 'admin', 'driver'), controller.getAllIssu
 router.get('/:id', requireRole('manager', 'admin', 'driver'), controller.getIssueById);
 router.post('/', requireRole('driver'), upload.single('image'), controller.createIssue);
 router.patch('/:id/status', requireRole('manager', 'admin'), controller.updateIssueStatus);
+router.all('/:id/resolve', requireRole('manager', 'admin'), (req, res, next) => {
+  req.body.status = 'resolved';
+  controller.updateIssueStatus(req, res, next);
+});
 router.delete('/clear', requireRole('manager', 'admin'), controller.clearIssues);
 router.delete('/:id', requireRole('manager', 'admin'), controller.deleteIssue);
 

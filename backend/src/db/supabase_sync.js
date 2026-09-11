@@ -36,7 +36,13 @@ function getPool() {
   }
 
   pool.on('error', (err) => {
-    console.warn('[Supabase Sync] Pool background error:', err.message);
+    console.warn('[Supabase Sync] Pool background error (handled):', err.message);
+  });
+
+  pool.on('connect', (client) => {
+    client.on('error', (err) => {
+      console.warn('[Supabase Sync] Client connection drop (handled):', err.message);
+    });
   });
 
   return pool;
